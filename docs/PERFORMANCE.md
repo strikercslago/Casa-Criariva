@@ -64,6 +64,12 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-10 | Filter archived | 99 ms | Mocked authenticated run with warm cache, `/auth/v1`: 0, `/rest/v1`: 0 |
 | 2026-08-10 | Student restore | 139 ms | Mocked authenticated run, `/auth/v1`: 0, `/rest/v1`: 3 |
 | 2026-08-10 | E2E after Students | 5.9 s | 2 Chromium tests: auth smoke and isolated students flow |
+| 2026-08-10 | Production build after Student 360 | 13.78 s | Vite internal build time after final prefetch change |
+| 2026-08-10 | Initial JS bundle after Student 360 | 478.85 KB / 143.37 KB gzip | Main shell unchanged in gzip size from Phase 3 build |
+| 2026-08-10 | CSS bundle after Student 360 | 20.16 KB / 4.82 KB gzip | Wizard/profile styles added through existing Tailwind tokens |
+| 2026-08-10 | Students route chunk after Student 360 | 61.02 KB / 15.68 KB gzip | Enrollment wizard, Student 360 profile, relation hooks and lightweight detail prefetch isolated in lazy route |
+| 2026-08-10 | Unit/component tests after Student 360 | 24.42 s | 15 files, 27 tests |
+| 2026-08-10 | E2E after Student 360 | 5.7 s | 2 Chromium tests: auth smoke and mocked 360 enrollment flow |
 
 ## Startup Notes
 
@@ -114,3 +120,16 @@ where id = :id
 ```
 
 EXPLAIN confirmed `students_full_name_trgm_idx` for `full_name ilike '%Ana%'`; execution time on the empty/initial remote table was 0.187 ms. The status/name list query is backed by `students_status_full_name_idx` and has no broad client-side filtering.
+
+## Student 360 Request Budget
+
+The `/alunos` list keeps the Phase 3 budget: one cold list request and no joins. The enrollment wizard adds class lookup only when the wizard opens, and guardian candidate lookup only when phone/email is long enough to search.
+
+After a student is opened, Student 360 makes detail-only relation requests:
+
+- `student_guardians`
+- `enrollments`
+- `student_billing_plans`
+- `audit_events` limited to 50 rows
+
+History is not loaded by the list and is not preloaded for every row. The route chunk remains lazy, and the heavier profile code is still isolated from initial app startup.

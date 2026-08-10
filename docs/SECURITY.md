@@ -90,3 +90,12 @@ Frontend safety:
 - Student API functions never use service role keys.
 - `.env.local` remains ignored.
 - Development auth/network diagnostics log status, path and duration only; they do not log passwords, tokens, API keys, request bodies or emails.
+
+## Student 360 Security
+
+- New private tables have RLS enabled: `guardians`, `student_guardians`, `classes`, `class_schedules`, `enrollments`, `student_billing_plans` and `audit_events`.
+- Direct anonymous REST reads of the new tables are blocked with `401` / PostgreSQL `42501`.
+- Policies are owner-only for authenticated users. `audit_events` grants only `SELECT` directly to authenticated users.
+- The frontend uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; no service role is used in the browser.
+- `complete_student_enrollment(payload jsonb)` is `SECURITY DEFINER` with fixed `search_path`, owner validation, no dynamic SQL and no exposed audit insert grant.
+- A forced invalid schedule inside the RPC failed on `class_schedules_time_order`; follow-up counts for student, guardian, class, enrollment, billing plan and audit event were all `0`, confirming atomic rollback.

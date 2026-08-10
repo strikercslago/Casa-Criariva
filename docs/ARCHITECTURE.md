@@ -72,3 +72,24 @@ Students query keys live in `src/features/students/hooks/studentsKeys.ts`:
 The route uses server-side pagination with 20 rows per page, debounced search at 320 ms and status filters (`all`, `active`, `inactive`, `archived`). Mutations update the detail cache and invalidate only students list queries.
 
 Route chunk prefetch already happens through the sidebar hover/focus mechanism. The first students list is not prefetched because that would create a REST request before clear user intent.
+
+## Student 360 Pattern
+
+Phase 3.5 keeps the existing students list contract unchanged and adds Student 360 behind detail-only queries. The list still performs no joins and selects only list columns. The profile loads related responsible parties, enrollments, billing plans and recent audit history after the student is opened.
+
+New files follow the existing domain split:
+
+- `student360Api.ts`: Supabase operations and RPC payload mapping.
+- `useStudent360.ts`: query and mutation hooks.
+- `EnrollmentWizard.tsx`: local-only stepped enrollment flow.
+- `Student360Profile.tsx`: tabbed profile for overview, responsible parties, enrollments, billing and history.
+
+The enrollment wizard persists only through `complete_student_enrollment`. There is no autosave to Supabase while the user is moving between steps, and closing a dirty wizard asks for confirmation.
+
+Student 360 query keys live in `src/features/students/hooks/student360Keys.ts`:
+
+- `student360Keys.guardians.candidates(params)`
+- `student360Keys.classes.list()`
+- `student360Keys.relations.detail(studentId)`
+
+`useCompleteStudentEnrollment` invalidates the students list, active class list and the new student's 360 relation cache. Existing older students render fallback messages when they have no related rows.

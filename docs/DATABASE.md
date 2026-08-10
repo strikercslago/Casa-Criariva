@@ -116,4 +116,61 @@ Created:
 | `students` | `students_status_full_name_idx (status, full_name, id)` | Paginated list filtered by status and ordered by name. | Supports the default operational list without indexing every column. |
 | `students` | `students_full_name_trgm_idx using gin(full_name extensions.gin_trgm_ops)` | Name search with `ilike '%term%'`. | Avoids loading all students in the browser for search. |
 
-No `guardians`, `classes`, `fees` or `payments` tables were created in this phase.
+No `guardians`, `classes`, `fees` or `payments` tables were created in Phase 3.
+
+## Student 360 Foundation
+
+Migration:
+
+- `20260810235000_student_360_foundation.sql`
+
+Created:
+
+- Enums `class_status`, `enrollment_status` and `billing_plan_status`.
+- Tables `guardians`, `student_guardians`, `classes`, `class_schedules`, `enrollments`, `student_billing_plans` and `audit_events`.
+- RPC `public.complete_student_enrollment(payload jsonb)`.
+
+The `students` table remains narrow. Responsible party, class and billing data live in normalized tables and are loaded only by the Student 360 profile.
+
+### Student 360 Tables
+
+| Table | Purpose |
+| --- | --- |
+| `guardians` | Reusable responsible party records. |
+| `student_guardians` | Many-to-many student/guardian links with relationship and contact flags. |
+| `classes` | Operational class records. |
+| `class_schedules` | Class weekday/time schedule rows. |
+| `enrollments` | Student enrollment in a class with status history. |
+| `student_billing_plans` | Current or historical monthly billing configuration. |
+| `audit_events` | Owner-readable timeline events created by trusted database paths. |
+
+### Student 360 Indexes
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `guardians` | `guardians_phone_idx` | Existing guardian lookup by phone in the enrollment wizard. |
+| `guardians` | `guardians_email_lower_idx` | Existing guardian lookup by lower-case email. |
+| `student_guardians` | `student_guardians_student_id_idx` | Loads a student's responsible parties. |
+| `student_guardians` | `student_guardians_guardian_id_idx` | Future guardian 360 views. |
+| `classes` | `classes_status_name_idx` | Lists active classes for enrollment. |
+| `class_schedules` | `class_schedules_class_id_idx` | Loads schedules for selected classes and profiles. |
+| `enrollments` | `enrollments_student_status_idx` | Loads active and historical enrollments by student. |
+| `enrollments` | `enrollments_class_status_idx` | Future class roster views. |
+| `student_billing_plans` | `student_billing_plans_student_status_idx` | Loads current and historical billing plans by student. |
+| `audit_events` | `audit_events_entity_created_at_idx` | Loads Student 360 history newest-first. |
+
+Partial unique indexes prevent duplicate active enrollment for the same student/class and multiple active billing plans for one student.
+
+### Enrollment RPC
+
+`complete_student_enrollment(payload jsonb)` persists the wizard atomically:
+
+- creates the student;
+- creates or reuses guardians;
+- links guardians to the student;
+- optionally creates/selects a class and creates schedules;
+- optionally creates the enrollment;
+- optionally creates the billing plan;
+- writes audit events.
+
+The function is `SECURITY DEFINER` only so it can write `audit_events` without granting arbitrary audit inserts to the frontend. It validates `auth.uid()`, requires `current_user_is_owner()`, fixes `search_path = public` and uses no dynamic SQL.

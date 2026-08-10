@@ -1,0 +1,48 @@
+# Student 360
+
+Student 360 is the complete student profile introduced in Phase 3.5. It extends the existing students module without changing the list query into a joined or heavy view.
+
+## Enrollment Flow
+
+The wide wizard has five steps:
+
+1. `Aluno`
+2. `Responsaveis`
+3. `Turma`
+4. `Mensalidade`
+5. `Revisar`
+
+Minimum required data is student name and enrollment date. Responsible parties, class and billing are optional. The review step shows fallback warnings when optional areas are missing.
+
+The wizard keeps all data local until completion. The only persistence action is the `complete_student_enrollment` RPC, so a failure rolls back the full enrollment.
+
+## Profile Tabs
+
+The detail drawer renders `Student360Profile` with:
+
+- `Visao geral`
+- `Responsaveis`
+- `Matriculas`
+- `Financeiro`
+- `Historico`
+
+Students created before Phase 3.5 can have no related rows. Those tabs render empty-state messages instead of failing or hiding the profile.
+
+## Data Boundaries
+
+`students` remains narrow and owns only student identity/status fields. Related data is normalized:
+
+- `guardians` and `student_guardians` for responsible parties;
+- `classes`, `class_schedules` and `enrollments` for class placement;
+- `student_billing_plans` for monthly billing setup;
+- `audit_events` for the administrative timeline.
+
+The list page does not join these tables. Related data is queried only when the student profile or wizard needs it.
+
+## Verification
+
+- TypeScript, lint, unit tests, production build and Playwright E2E passed after the implementation.
+- Remote migration `20260810235000_student_360_foundation.sql` is applied.
+- RLS is enabled on all new tables.
+- Anonymous REST access is blocked.
+- Forced RPC failure leaves zero residual student, guardian, class, enrollment, billing or audit rows.
