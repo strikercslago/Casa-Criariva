@@ -44,7 +44,11 @@ The first schema should be small and added by domain. Planned entities:
 
 ## Applied Auth Foundation
 
-Migration: `20260810192204_auth_foundation.sql`.
+Migrations:
+
+- `20260810192204_auth_foundation.sql`
+- `20260810205929_fix_rls_function_owners.sql`
+- `20260810210313_fix_has_role_row_security.sql`
 
 Created:
 
@@ -59,3 +63,11 @@ Created:
 - Trigger `on_auth_user_created_create_profile`.
 
 No student, guardian, class, billing, finance, event, material or idea tables were created in this phase.
+
+## Bootstrap Owner
+
+The first owner was assigned after the admin Auth user was manually created:
+
+- `public.profiles` contains the created user profile.
+- `public.user_roles` contains one `owner` row for the created admin user.
+- No owner assignment exists in a migration.

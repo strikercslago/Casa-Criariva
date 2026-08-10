@@ -36,7 +36,8 @@ The local Node runtime is 18.20.8. React Router releases that fully clear the 20
 - `.env.local` is ignored by Git and contains only browser-safe Supabase values.
 - No service role, database password, secret key or administrative token is used in frontend code.
 - Public signup UI was not implemented.
-- Local Supabase config sets signup disabled for local Auth.
+- Local and remote Supabase Auth config set signup disabled.
+- A fake public signup attempt returned blocked and did not create a user.
 - Remote `profiles` and `user_roles` reject anonymous reads: both returned `401` with PostgreSQL code `42501` in the unauthenticated RLS check.
 
 ## RLS Policies
@@ -55,8 +56,14 @@ The local Node runtime is 18.20.8. React Router releases that fully clear the 20
 - `user_roles_update_owner`: owners can update roles.
 - `user_roles_delete_owner`: owners can remove roles.
 
-`user_roles` policies avoid RLS recursion by using small `SECURITY DEFINER` helper functions with explicit `search_path`.
+`user_roles` policies avoid RLS recursion by using small `SECURITY DEFINER` helper functions with explicit `search_path`. `has_role()` is owned by `postgres` and sets `row_security = off` internally so it can check role membership without recursively invoking `user_roles` policies.
 
 ## Manual Bootstrap Boundary
 
-No owner is created automatically. The first owner must be assigned only after an administrative user exists in Supabase Auth.
+No owner is created automatically. The first owner was assigned only after an administrative user existed in Supabase Auth.
+
+## RLS Verification
+
+- Anonymous API reads of `profiles` and `user_roles`: blocked with `401` / `42501`.
+- `has_role(created_user, owner)`: returned `true`.
+- Simulated authenticated owner query could read owner-visible profiles.

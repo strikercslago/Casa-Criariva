@@ -47,6 +47,7 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-10 | Protected route redirect | 92 ms | `/alunos` to `/login` |
 | 2026-08-10 | Invalid login feedback | 3545 ms | Supabase Auth rejected invalid credentials |
 | 2026-08-10 | E2E smoke after Auth | 8.5 s | Protected route and login smoke |
+| 2026-08-10 | Public signup check | blocked | Fake signup returned error and created no user |
 
 ## Startup Notes
 
