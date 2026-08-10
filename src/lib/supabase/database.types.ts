@@ -41,6 +41,48 @@ export type Database = {
         }
         Relationships: []
       }
+      students: {
+        Row: {
+          archived_at: string | null
+          birth_date: string | null
+          created_at: string
+          created_by: string | null
+          enrollment_date: string
+          full_name: string
+          id: string
+          notes: string | null
+          preferred_name: string | null
+          status: Database["public"]["Enums"]["student_status"]
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          birth_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          enrollment_date?: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          preferred_name?: string | null
+          status?: Database["public"]["Enums"]["student_status"]
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          birth_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          enrollment_date?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          preferred_name?: string | null
+          status?: Database["public"]["Enums"]["student_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -78,6 +120,7 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "teacher"
+      student_status: "active" | "inactive" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -206,6 +249,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "teacher"],
+      student_status: ["active", "inactive", "archived"],
     },
   },
 } as const

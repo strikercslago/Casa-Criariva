@@ -36,7 +36,7 @@ The local Node runtime is 18.20.8. React Router releases that fully clear the 20
 - `.env.local` is ignored by Git and contains only browser-safe Supabase values.
 - No service role, database password, secret key or administrative token is used in frontend code.
 - Public signup UI was not implemented.
-- Local and remote Supabase Auth config set signup disabled.
+- Local and remote Supabase Auth config keep global signup disabled. The email/password provider is enabled so existing dashboard-created users can sign in.
 - A fake public signup attempt returned blocked and did not create a user.
 - Remote `profiles` and `user_roles` reject anonymous reads: both returned `401` with PostgreSQL code `42501` in the unauthenticated RLS check.
 
@@ -67,3 +67,26 @@ No owner is created automatically. The first owner was assigned only after an ad
 - Anonymous API reads of `profiles` and `user_roles`: blocked with `401` / `42501`.
 - `has_role(created_user, owner)`: returned `true`.
 - Simulated authenticated owner query could read owner-visible profiles.
+
+## Students Security
+
+- `public.students` has RLS enabled.
+- Anonymous REST reads of `students` are blocked: `401`.
+- Owner policies are limited to `SELECT`, `INSERT` and `UPDATE`.
+- Archiving and restoring are normal updates; physical delete is not granted to the frontend role.
+- Teacher access is not granted in Phase 3.
+- Admin access is deferred until a real admin workflow exists.
+- Owner RLS uses `current_user_is_owner()`, which delegates to the existing `has_role()` helper with recursion protection.
+- A rollback-only owner simulation inserted and archived a temporary student through RLS successfully, then left `0` residual rows.
+
+Students policies:
+
+- `students_select_owner`: owners can read students.
+- `students_insert_owner`: owners can create students.
+- `students_update_owner`: owners can edit, archive and restore students.
+
+Frontend safety:
+
+- Student API functions never use service role keys.
+- `.env.local` remains ignored.
+- Development auth/network diagnostics log status, path and duration only; they do not log passwords, tokens, API keys, request bodies or emails.
