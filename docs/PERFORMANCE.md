@@ -48,6 +48,22 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-10 | Invalid login feedback | 3545 ms | Supabase Auth rejected invalid credentials |
 | 2026-08-10 | E2E smoke after Auth | 8.5 s | Protected route and login smoke |
 | 2026-08-10 | Public signup check | blocked | Fake signup returned error and created no user |
+| 2026-08-10 | Vite dev startup before Students | 1001 ms | `npm run dev -- --host 127.0.0.1 --port 5176` |
+| 2026-08-10 | Production build after Students | 36.64 s | Final validation run, includes TypeScript build and Vite build |
+| 2026-08-10 | Vite transform/render after Students | 19.59 s | Reported by Vite inside the final build |
+| 2026-08-10 | Initial JS bundle after Students | 478.85 KB / 143.37 KB gzip | `dist/assets/index-*.js` |
+| 2026-08-10 | CSS bundle after Students | 18.88 KB / 4.67 KB gzip | `dist/assets/index-*.css` |
+| 2026-08-10 | Students route chunk | 27.05 KB / 8.16 KB gzip | Lazy `StudentsPage` domain code |
+| 2026-08-10 | Shared form chunk | 85.31 KB / 23.95 KB gzip | Shared by lazy login and students form routes |
+| 2026-08-10 | First `/alunos` open | 87 ms | Mocked authenticated run, `/auth/v1`: 0, `/rest/v1`: 1 |
+| 2026-08-10 | Return to `/alunos` with cache | 105 ms | Mocked authenticated run, `/auth/v1`: 0, `/rest/v1`: 0 |
+| 2026-08-10 | Student create | 164 ms | Mocked authenticated run, `/auth/v1`: 0, `/rest/v1`: 2 |
+| 2026-08-10 | Student detail open | 98 ms | Detail was already cached after create, `/auth/v1`: 0, `/rest/v1`: 0 |
+| 2026-08-10 | Student edit | 149 ms | Mocked authenticated run, `/auth/v1`: 0, `/rest/v1`: 2 |
+| 2026-08-10 | Student archive | 97 ms | Mocked authenticated run, `/auth/v1`: 0, `/rest/v1`: 2 |
+| 2026-08-10 | Filter archived | 99 ms | Mocked authenticated run with warm cache, `/auth/v1`: 0, `/rest/v1`: 0 |
+| 2026-08-10 | Student restore | 139 ms | Mocked authenticated run, `/auth/v1`: 0, `/rest/v1`: 3 |
+| 2026-08-10 | E2E after Students | 5.9 s | 2 Chromium tests: auth smoke and isolated students flow |
 
 ## Startup Notes
 
@@ -66,3 +82,35 @@ The first Auth E2E run exposed that `.env.local` had been written with a BOM by 
 | CSS gzip | 4.26 KB | 4.43 KB | +0.17 KB |
 
 The main bundle increase is small. Login-specific form dependencies are isolated in the lazy `LoginPage` chunk.
+
+## Students Request Budget
+
+Target for opening `/alunos` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1`: 1 list request when cache is cold.
+- `/rest/v1`: 0 requests when the list cache is still fresh.
+
+Students list cache uses `staleTime = 90_000 ms`. Global auth profile and roles are owned by `AuthProvider`; the students route does not re-fetch Auth just to navigate.
+
+Students list query:
+
+```sql
+select id, full_name, preferred_name, birth_date, enrollment_date, status
+from students
+where status = :status -- omitted for "all"
+  and full_name ilike :search -- only after debounce
+order by full_name asc, id asc
+range :page
+```
+
+Detail query:
+
+```sql
+select id, full_name, preferred_name, birth_date, enrollment_date, status,
+       notes, created_by, created_at, updated_at, archived_at
+from students
+where id = :id
+```
+
+EXPLAIN confirmed `students_full_name_trgm_idx` for `full_name ilike '%Ana%'`; execution time on the empty/initial remote table was 0.187 ms. The status/name list query is backed by `students_status_full_name_idx` and has no broad client-side filtering.
