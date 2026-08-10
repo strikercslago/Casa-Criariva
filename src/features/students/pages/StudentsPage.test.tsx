@@ -12,6 +12,10 @@ const useStudentDetail = vi.hoisted(() => vi.fn())
 const useUpdateStudent = vi.hoisted(() => vi.fn())
 const useArchiveStudent = vi.hoisted(() => vi.fn())
 const useRestoreStudent = vi.hoisted(() => vi.fn())
+const useClassesForEnrollment = vi.hoisted(() => vi.fn())
+const useCompleteStudentEnrollment = vi.hoisted(() => vi.fn())
+const useGuardianCandidates = vi.hoisted(() => vi.fn())
+const useStudent360Data = vi.hoisted(() => vi.fn())
 
 vi.mock('@/features/students/hooks/useStudents', () => ({
   useArchiveStudent,
@@ -20,6 +24,13 @@ vi.mock('@/features/students/hooks/useStudents', () => ({
   useStudentDetail,
   useStudentsList,
   useUpdateStudent,
+}))
+
+vi.mock('@/features/students/hooks/useStudent360', () => ({
+  useClassesForEnrollment,
+  useCompleteStudentEnrollment,
+  useGuardianCandidates,
+  useStudent360Data,
 }))
 
 function renderPage() {
@@ -43,6 +54,10 @@ describe('StudentsPage', () => {
     useUpdateStudent.mockReturnValue({ isPending: false, mutateAsync: vi.fn() })
     useArchiveStudent.mockReturnValue({ isPending: false, mutateAsync: vi.fn() })
     useRestoreStudent.mockReturnValue({ isPending: false, mutateAsync: vi.fn() })
+    useClassesForEnrollment.mockReturnValue({ data: [], isLoading: false })
+    useCompleteStudentEnrollment.mockReturnValue({ isPending: false, mutateAsync: vi.fn() })
+    useGuardianCandidates.mockReturnValue({ data: [], isLoading: false })
+    useStudent360Data.mockReturnValue({ data: null, isError: false, isLoading: false })
   })
 
   it('shows the empty state for first use', () => {
@@ -88,6 +103,6 @@ describe('StudentsPage', () => {
     expect(screen.getAllByText('Ana Beatriz')[0]).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Novo aluno' }))
 
-    expect(screen.getByRole('dialog', { name: 'Novo aluno' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Matricula completa' })).toBeInTheDocument()
   })
 })

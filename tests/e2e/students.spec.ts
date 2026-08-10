@@ -14,6 +14,16 @@ type Student = {
   updated_at: string
 }
 
+type Guardian = {
+  created_at: string
+  email: string | null
+  full_name: string
+  id: string
+  notes: string | null
+  phone: string | null
+  updated_at: string
+}
+
 test('manages students with mocked Supabase requests', async ({ page }) => {
   const consoleErrors: string[] = []
   const restRequests: string[] = []
@@ -21,6 +31,7 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
   const now = '2026-08-10T22:30:00.000Z'
   const userId = '11111111-1111-4111-8111-111111111111'
   let students: Student[] = []
+  let guardians: Guardian[] = []
 
   page.on('console', (message) => {
     if (message.type() === 'error') {
@@ -80,6 +91,105 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
       await route.fulfill({
         contentType: 'application/json',
         json: [{ role: 'owner' }],
+        status: 200,
+      })
+      return
+    }
+
+    if (url.pathname.endsWith('/rpc/complete_student_enrollment')) {
+      const body = request.postDataJSON() as {
+        payload: {
+          guardians?: Array<{
+            guardian?: { email: string | null; full_name: string; notes: string | null; phone: string | null }
+            relationship: string
+          }>
+          student: Partial<Student>
+        }
+      }
+      const student: Student = {
+        archived_at: null,
+        birth_date: body.payload.student.birth_date ?? null,
+        created_at: now,
+        created_by: userId,
+        enrollment_date: body.payload.student.enrollment_date ?? '2026-03-05',
+        full_name: body.payload.student.full_name ?? 'Aluno temporario',
+        id: 'student-1',
+        notes: body.payload.student.notes ?? null,
+        preferred_name: body.payload.student.preferred_name ?? null,
+        status: 'active',
+        updated_at: now,
+      }
+      students = [student, ...students]
+      guardians =
+        body.payload.guardians?.map((link, index) => ({
+          created_at: now,
+          email: link.guardian?.email ?? null,
+          full_name: link.guardian?.full_name ?? `Responsavel ${index + 1}`,
+          id: `guardian-${index + 1}`,
+          notes: link.guardian?.notes ?? null,
+          phone: link.guardian?.phone ?? null,
+          updated_at: now,
+        })) ?? []
+
+      await route.fulfill({ contentType: 'application/json', json: student.id, status: 200 })
+      return
+    }
+
+    if (url.pathname.endsWith('/classes')) {
+      await route.fulfill({ contentType: 'application/json', json: [], status: 200 })
+      return
+    }
+
+    if (url.pathname.endsWith('/guardians')) {
+      await route.fulfill({ contentType: 'application/json', json: [], status: 200 })
+      return
+    }
+
+    if (url.pathname.endsWith('/student_guardians')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        json: guardians.map((guardian, index) => ({
+          can_pick_up: true,
+          created_at: now,
+          guardian,
+          guardian_id: guardian.id,
+          is_emergency_contact: true,
+          is_financial_responsible: index === 0,
+          is_primary_contact: index === 0,
+          relationship: 'Mae',
+          student_id: 'student-1',
+        })),
+        status: 200,
+      })
+      return
+    }
+
+    if (url.pathname.endsWith('/enrollments')) {
+      await route.fulfill({ contentType: 'application/json', json: [], status: 200 })
+      return
+    }
+
+    if (url.pathname.endsWith('/student_billing_plans')) {
+      await route.fulfill({ contentType: 'application/json', json: [], status: 200 })
+      return
+    }
+
+    if (url.pathname.endsWith('/audit_events')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        json: students.length
+          ? [
+              {
+                action: 'student.created',
+                actor_user_id: userId,
+                created_at: now,
+                entity_id: 'student-1',
+                entity_type: 'student',
+                id: 'audit-1',
+                metadata: {},
+              },
+            ]
+          : [],
         status: 200,
       })
       return
@@ -167,17 +277,22 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
   await page.getByLabel(/^Nome completo/).fill('Aluno E2E Temporario')
   await page.getByLabel('Nome preferido').fill('E2E')
   await page.getByLabel(/^Data de matricula/).fill('2026-03-05')
-  await page.getByLabel('Observacoes').fill('Criado por teste isolado.')
-  await page.getByRole('button', { name: 'Cadastrar', exact: true }).click()
+  await page.getByLabel('Observacoes internas').fill('Criado por teste isolado.')
+  await page.getByRole('button', { name: 'Proximo' }).click()
+  await page.getByRole('button', { name: 'Adicionar responsavel' }).click()
+  await page.getByLabel(/^Nome completo/).last().fill('Mae E2E')
+  await page.getByLabel('Celular / WhatsApp *').fill('11999990000')
+  await page.getByRole('button', { name: 'Proximo' }).click()
+  await page.getByRole('button', { name: 'Proximo' }).click()
+  await page.getByRole('button', { name: 'Proximo' }).click()
+  await expect(page.getByRole('heading', { name: 'Responsaveis' })).toBeVisible()
+  await page.getByRole('button', { name: 'Concluir matricula' }).click()
 
-  await expect(page.getByText('Aluno cadastrado.')).toBeVisible()
+  await expect(page.getByText('Matricula concluida com sucesso.')).toBeVisible()
   await expect(page.getByText('Aluno E2E Temporario').first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Aluno E2E Temporario' })).toBeVisible()
 
-  await page.getByRole('searchbox', { name: 'Buscar aluno' }).fill('E2E')
-  await expect(page.getByText('Aluno E2E Temporario').first()).toBeVisible()
-
-  await page.getByRole('button', { name: 'Abrir Aluno E2E Temporario' }).first().click()
-  await page.getByRole('button', { name: 'Editar' }).click()
+  await page.getByRole('button', { name: 'Editar dados do aluno' }).click()
   await page.getByLabel(/^Nome completo/).fill('Aluno E2E Editado')
   await page.getByRole('button', { name: 'Salvar' }).click()
   await expect(page.getByText('Aluno atualizado.')).toBeVisible()
