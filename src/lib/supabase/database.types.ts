@@ -14,6 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_events: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: []
+      }
+      class_schedules: {
+        Row: {
+          class_id: string
+          created_at: string
+          end_time: string
+          id: string
+          start_time: string
+          weekday: number
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          end_time: string
+          id?: string
+          start_time: string
+          weekday: number
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_schedules_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["class_status"]
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["class_status"]
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["class_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      enrollments: {
+        Row: {
+          class_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          start_date: string
+          status: Database["public"]["Enums"]["enrollment_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          start_date: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guardians: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -40,6 +213,114 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      student_billing_plans: {
+        Row: {
+          auto_generate_fees: boolean
+          base_amount: number
+          billing_start_date: string
+          created_at: string
+          discount_amount: number
+          discount_reason: string | null
+          due_day: number
+          financial_guardian_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["billing_plan_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_generate_fees?: boolean
+          base_amount: number
+          billing_start_date: string
+          created_at?: string
+          discount_amount?: number
+          discount_reason?: string | null
+          due_day: number
+          financial_guardian_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["billing_plan_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_generate_fees?: boolean
+          base_amount?: number
+          billing_start_date?: string
+          created_at?: string
+          discount_amount?: number
+          discount_reason?: string | null
+          due_day?: number
+          financial_guardian_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["billing_plan_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_billing_plans_financial_guardian_id_fkey"
+            columns: ["financial_guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_billing_plans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_guardians: {
+        Row: {
+          can_pick_up: boolean
+          created_at: string
+          guardian_id: string
+          is_emergency_contact: boolean
+          is_financial_responsible: boolean
+          is_primary_contact: boolean
+          relationship: string
+          student_id: string
+        }
+        Insert: {
+          can_pick_up?: boolean
+          created_at?: string
+          guardian_id: string
+          is_emergency_contact?: boolean
+          is_financial_responsible?: boolean
+          is_primary_contact?: boolean
+          relationship: string
+          student_id: string
+        }
+        Update: {
+          can_pick_up?: boolean
+          created_at?: string
+          guardian_id?: string
+          is_emergency_contact?: boolean
+          is_financial_responsible?: boolean
+          is_primary_contact?: boolean
+          relationship?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_guardians_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_guardians_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       students: {
         Row: {
@@ -109,6 +390,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_student_enrollment: { Args: { payload: Json }; Returns: string }
       current_user_is_owner: { Args: never; Returns: boolean }
       has_role: {
         Args: {
@@ -120,6 +402,9 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "teacher"
+      billing_plan_status: "active" | "paused" | "ended"
+      class_status: "active" | "inactive" | "archived"
+      enrollment_status: "active" | "paused" | "ended"
       student_status: "active" | "inactive" | "archived"
     }
     CompositeTypes: {
@@ -249,6 +534,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "teacher"],
+      billing_plan_status: ["active", "paused", "ended"],
+      class_status: ["active", "inactive", "archived"],
+      enrollment_status: ["active", "paused", "ended"],
       student_status: ["active", "inactive", "archived"],
     },
   },
