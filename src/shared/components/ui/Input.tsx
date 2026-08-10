@@ -1,3 +1,4 @@
+import { forwardRef } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import { cn } from '@/shared/utils/cn'
 
@@ -6,7 +7,10 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   error?: string
 }
 
-export function Input({ className, id, label, error, ...props }: InputProps) {
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { className, id, label, error, ...props },
+  ref,
+) {
   const inputId = id ?? props.name
   const errorId = error && inputId ? `${inputId}-error` : undefined
 
@@ -23,6 +27,7 @@ export function Input({ className, id, label, error, ...props }: InputProps) {
           className,
         )}
         id={inputId}
+        ref={ref}
         {...props}
       />
       {error ? (
@@ -32,4 +37,4 @@ export function Input({ className, id, label, error, ...props }: InputProps) {
       ) : null}
     </label>
   )
-}
+})

@@ -1,4 +1,5 @@
 export const routePreloaders = {
+  login: () => import('@/features/auth/pages/LoginPage'),
   dashboard: () => import('@/features/dashboard/pages/DashboardPage'),
   agenda: () => import('@/features/agenda/pages/AgendaPage'),
   students: () => import('@/features/students/pages/StudentsPage'),

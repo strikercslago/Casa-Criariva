@@ -1,9 +1,10 @@
 import { Suspense, useMemo, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { Menu, Palette, Search, ShieldCheck } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { LogOut, Menu, Palette, Search, ShieldCheck } from 'lucide-react'
 import { routePreloaders } from '@/app/router/routePreloaders'
 import { useAuth } from '@/app/providers/AuthProvider'
 import { Badge } from '@/shared/components/ui/Badge'
+import { Button } from '@/shared/components/ui/Button'
 import { IconButton } from '@/shared/components/ui/IconButton'
 import { RouteSkeleton } from '@/shared/components/feedback/RouteSkeleton'
 import { navigationItems } from '@/shared/constants/navigation'
@@ -27,22 +28,31 @@ const preloadByPath = new Map([
 
 export function RootLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const auth = useAuth()
+  const navigate = useNavigate()
   const statusLabel = useMemo(() => {
-    if (auth.status === 'unconfigured') {
-      return 'Supabase pendente'
+    if (auth.roles.includes('owner')) {
+      return 'Owner'
     }
 
-    if (auth.status === 'authenticated') {
-      return 'Sessao ativa'
+    if (auth.roles.includes('admin')) {
+      return 'Admin'
     }
 
-    if (auth.status === 'checking') {
-      return 'Validando'
+    if (auth.roles.includes('teacher')) {
+      return 'Professor'
     }
 
-    return 'Acesso local'
-  }, [auth.status])
+    return auth.isAccountLoading ? 'Carregando acesso' : 'Sem role'
+  }, [auth.isAccountLoading, auth.roles])
+
+  async function handleSignOut() {
+    setIsSigningOut(true)
+    await auth.signOut()
+    setIsSigningOut(false)
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -71,14 +81,26 @@ export function RootLayout() {
             Busca global preparada
           </div>
 
-          <Badge tone={auth.status === 'error' ? 'danger' : 'primary'}>{statusLabel}</Badge>
+          <Badge tone={auth.roles.length > 0 ? 'primary' : 'warning'}>{statusLabel}</Badge>
           <ShieldCheck className="hidden h-5 w-5 text-primary sm:block" aria-hidden />
+          <Button
+            className="hidden sm:inline-flex"
+            isLoading={isSigningOut}
+            leftIcon={<LogOut className="h-4 w-4" aria-hidden />}
+            onClick={handleSignOut}
+            variant="secondary"
+          >
+            Sair
+          </Button>
         </div>
       </header>
 
       <div className="flex">
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-border bg-surface lg:block">
-          <SidebarContent />
+          <SidebarContent
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+          />
         </aside>
 
         {isMobileMenuOpen ? (
@@ -91,7 +113,11 @@ export function RootLayout() {
               className="h-full w-72 max-w-[85vw] border-r border-border bg-surface shadow-elevated"
               onMouseDown={(event) => event.stopPropagation()}
             >
-              <SidebarContent onNavigate={() => setIsMobileMenuOpen(false)} />
+              <SidebarContent
+                isSigningOut={isSigningOut}
+                onNavigate={() => setIsMobileMenuOpen(false)}
+                onSignOut={handleSignOut}
+              />
             </aside>
           </div>
         ) : null}
@@ -106,29 +132,48 @@ export function RootLayout() {
   )
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({
+  isSigningOut,
+  onNavigate,
+  onSignOut,
+}: {
+  isSigningOut: boolean
+  onNavigate?: () => void
+  onSignOut: () => void
+}) {
   return (
     <nav className="flex h-full flex-col gap-1 overflow-y-auto p-3" aria-label="Navegacao principal">
-      {navigationItems.map((item) => (
-        <NavLink
-          className={({ isActive }) =>
-            cn(
-              'flex min-h-10 items-center gap-3 rounded px-3 py-2 text-sm font-medium text-muted-foreground transition-colors',
-              'hover:bg-muted hover:text-foreground',
-              isActive && 'bg-primary/10 text-primary',
-            )
-          }
-          end={item.path === '/'}
-          key={item.path}
-          onClick={onNavigate}
-          onFocus={() => void preloadByPath.get(item.path)?.()}
-          onMouseEnter={() => void preloadByPath.get(item.path)?.()}
-          to={item.path}
-        >
-          <item.icon className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="truncate">{item.label}</span>
-        </NavLink>
-      ))}
+      <div className="flex flex-1 flex-col gap-1">
+        {navigationItems.map((item) => (
+          <NavLink
+            className={({ isActive }) =>
+              cn(
+                'flex min-h-10 items-center gap-3 rounded px-3 py-2 text-sm font-medium text-muted-foreground transition-colors',
+                'hover:bg-muted hover:text-foreground',
+                isActive && 'bg-primary/10 text-primary',
+              )
+            }
+            end={item.path === '/'}
+            key={item.path}
+            onClick={onNavigate}
+            onFocus={() => void preloadByPath.get(item.path)?.()}
+            onMouseEnter={() => void preloadByPath.get(item.path)?.()}
+            to={item.path}
+          >
+            <item.icon className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="truncate">{item.label}</span>
+          </NavLink>
+        ))}
+      </div>
+      <Button
+        className="mt-3 w-full justify-start sm:hidden"
+        isLoading={isSigningOut}
+        leftIcon={<LogOut className="h-4 w-4" aria-hidden />}
+        onClick={onSignOut}
+        variant="secondary"
+      >
+        Sair
+      </Button>
     </nav>
   )
 }

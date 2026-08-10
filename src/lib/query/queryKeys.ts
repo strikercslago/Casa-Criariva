@@ -1,7 +1,8 @@
 export const queryKeys = {
   auth: {
     session: ['auth', 'session'] as const,
-    profile: (userId: string) => ['auth', 'profile', userId] as const,
+    profile: (userId: string) => ['profile', userId] as const,
+    roles: (userId: string) => ['roles', userId] as const,
   },
   dashboard: {
     summary: ['dashboard', 'summary'] as const,

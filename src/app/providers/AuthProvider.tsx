@@ -7,10 +7,14 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session, User } from '@supabase/supabase-js'
 import { isSupabaseConfigured } from '@/app/config/env'
+import { createTimeoutError, getAuthErrorMessage } from '@/app/providers/authErrors'
+import { queryKeys } from '@/lib/query/queryKeys'
 import { getSupabaseClient } from '@/lib/supabase/client'
-import type { UserRole } from '@/lib/supabase/database.types'
+import type { AppRole, Profile } from '@/lib/supabase/types'
+import { withTimeout } from '@/shared/utils/withTimeout'
 
 type AuthStatus = 'checking' | 'unauthenticated' | 'authenticated' | 'unconfigured' | 'error'
 
@@ -18,23 +22,34 @@ type AuthState = {
   status: AuthStatus
   session: Session | null
   user: User | null
-  roles: UserRole[]
   errorMessage: string | null
 }
 
 type AuthContextValue = AuthState & {
   isReady: boolean
+  profile: Profile | null
+  roles: AppRole[]
+  isAccountLoading: boolean
+  accountErrorMessage: string | null
+  signInWithPassword: (credentials: LoginCredentials) => Promise<{ errorMessage: string | null }>
   signOut: () => Promise<void>
+  refetchAccount: () => Promise<void>
+}
+
+export type LoginCredentials = {
+  email: string
+  password: string
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+const AUTH_TIMEOUT_MS = 12_000
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [state, setState] = useState<AuthState>({
     status: isSupabaseConfigured ? 'checking' : 'unconfigured',
     session: null,
     user: null,
-    roles: [],
     errorMessage: null,
   })
 
@@ -49,28 +64,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isMounted = true
 
     async function bootstrapSession() {
-      const { data, error } = await client.auth.getSession()
+      const result = await withTimeout(client.auth.getSession(), AUTH_TIMEOUT_MS, createTimeoutError)
+        .then(({ data, error }) => ({ data, errorMessage: getAuthErrorMessage(error) }))
+        .catch((error: Error) => ({ data: null, errorMessage: getAuthErrorMessage(error) }))
 
       if (!isMounted) {
         return
       }
 
-      if (error) {
+      if (result.errorMessage || !result.data) {
         setState({
           status: 'error',
           session: null,
           user: null,
-          roles: [],
-          errorMessage: 'Nao foi possivel validar a sessao.',
+          errorMessage: result.errorMessage,
         })
         return
       }
 
       setState({
-        status: data.session ? 'authenticated' : 'unauthenticated',
-        session: data.session,
-        user: data.session?.user ?? null,
-        roles: data.session ? ['owner'] : [],
+        status: result.data.session ? 'authenticated' : 'unauthenticated',
+        session: result.data.session,
+        user: result.data.session?.user ?? null,
         errorMessage: null,
       })
     }
@@ -82,16 +97,109 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         status: session ? 'authenticated' : 'unauthenticated',
         session,
         user: session?.user ?? null,
-        roles: session ? ['owner'] : [],
         errorMessage: null,
       })
+
+      if (!session) {
+        queryClient.clear()
+      }
     })
 
     return () => {
       isMounted = false
       listener.subscription.unsubscribe()
     }
-  }, [])
+  }, [queryClient])
+
+  const profileQuery = useQuery({
+    queryKey: state.user ? queryKeys.auth.profile(state.user.id) : ['profile', 'anonymous'],
+    enabled: state.status === 'authenticated' && Boolean(state.user),
+    staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
+    queryFn: async () => {
+      const supabase = getSupabaseClient()
+
+      if (!supabase || !state.user) {
+        throw new Error('Supabase nao configurado.')
+      }
+
+      const { data, error } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, is_active, created_at, updated_at')
+          .eq('id', state.user.id)
+          .maybeSingle(),
+        AUTH_TIMEOUT_MS,
+        createTimeoutError,
+      )
+
+      if (error) {
+        throw error
+      }
+
+      return data
+    },
+  })
+
+  const rolesQuery = useQuery({
+    queryKey: state.user ? queryKeys.auth.roles(state.user.id) : ['roles', 'anonymous'],
+    enabled: state.status === 'authenticated' && Boolean(state.user),
+    staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
+    queryFn: async () => {
+      const supabase = getSupabaseClient()
+
+      if (!supabase || !state.user) {
+        throw new Error('Supabase nao configurado.')
+      }
+
+      const { data, error } = await withTimeout(
+        supabase.from('user_roles').select('role').eq('user_id', state.user.id).order('role'),
+        AUTH_TIMEOUT_MS,
+        createTimeoutError,
+      )
+
+      if (error) {
+        throw error
+      }
+
+      return data.map((row) => row.role)
+    },
+  })
+
+  const signInWithPassword = useCallback(
+    async ({ email, password }: LoginCredentials) => {
+      const supabase = getSupabaseClient()
+
+      if (!supabase) {
+        return {
+          errorMessage: 'Supabase ainda nao esta configurado neste ambiente.',
+        }
+      }
+
+      const result = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password }),
+        AUTH_TIMEOUT_MS,
+        createTimeoutError,
+      )
+        .then(({ data, error }) => ({ data, errorMessage: getAuthErrorMessage(error) }))
+        .catch((error: Error) => ({ data: null, errorMessage: getAuthErrorMessage(error) }))
+
+      if (result.errorMessage || !result.data) {
+        return { errorMessage: result.errorMessage ?? 'Nao foi possivel entrar.' }
+      }
+
+      setState({
+        status: result.data.session ? 'authenticated' : 'unauthenticated',
+        session: result.data.session,
+        user: result.data.session?.user ?? null,
+        errorMessage: null,
+      })
+
+      return { errorMessage: null }
+    },
+    [],
+  )
 
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient()
@@ -101,24 +209,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const { error } = await supabase.auth.signOut()
+    const result = await withTimeout(
+      supabase.auth.signOut(),
+      AUTH_TIMEOUT_MS,
+      createTimeoutError,
+    )
+      .then(({ error }) => ({ errorMessage: getAuthErrorMessage(error) }))
+      .catch((error: Error) => ({ errorMessage: getAuthErrorMessage(error) }))
 
-    if (error) {
+    if (result.errorMessage) {
       setState((current) => ({
         ...current,
         status: 'error',
-        errorMessage: 'Nao foi possivel sair da conta.',
+        errorMessage: result.errorMessage,
       }))
+      return
     }
-  }, [])
+
+    queryClient.clear()
+    setState({
+      status: 'unauthenticated',
+      session: null,
+      user: null,
+      errorMessage: null,
+    })
+  }, [queryClient])
+
+  const refetchAccount = useCallback(async () => {
+    await Promise.all([profileQuery.refetch(), rolesQuery.refetch()])
+  }, [profileQuery, rolesQuery])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,
       isReady: state.status !== 'checking',
+      profile: profileQuery.data ?? null,
+      roles: rolesQuery.data ?? [],
+      isAccountLoading: profileQuery.isFetching || rolesQuery.isFetching,
+      accountErrorMessage:
+        profileQuery.error || rolesQuery.error
+          ? 'Nao foi possivel atualizar perfil e permissoes.'
+          : null,
+      signInWithPassword,
       signOut,
+      refetchAccount,
     }),
-    [signOut, state],
+    [
+      profileQuery.data,
+      profileQuery.error,
+      profileQuery.isFetching,
+      refetchAccount,
+      rolesQuery.data,
+      rolesQuery.error,
+      rolesQuery.isFetching,
+      signInWithPassword,
+      signOut,
+      state,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

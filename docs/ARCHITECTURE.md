@@ -27,4 +27,16 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-This phase creates foundation only. Real students, finance, billing and agenda logic are intentionally not implemented yet.
+Phase 2 adds Supabase Auth foundation: protected routes, login, logout, profile and roles cache. Real students, finance, billing and agenda logic are intentionally not implemented yet.
+
+## Auth Flow
+
+App startup calls Supabase `getSession()` once in `AuthProvider`. `onAuthStateChange` keeps session state current. Profile and roles are loaded through TanStack Query with keys `['profile', userId]` and `['roles', userId]`.
+
+Route guards use provider state only:
+
+- unauthenticated users go to `/login`;
+- authenticated users can enter the app shell;
+- authenticated users visiting `/login` return to dashboard.
+
+Logout calls Supabase Auth once, clears private Query cache and redirects to `/login`.
