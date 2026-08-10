@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { CalendarDays, CreditCard, GraduationCap, PartyPopper } from 'lucide-react'
+import { logAuthDiagnostic } from '@/lib/monitoring/authDiagnostics'
 import { PageHeader } from '@/shared/components/navigation/PageHeader'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Card } from '@/shared/components/ui/Card'
@@ -12,6 +14,10 @@ const foundationStats = [
 ]
 
 export default function DashboardPage() {
+  useEffect(() => {
+    logAuthDiagnostic('F.dashboard', 'render')
+  }, [])
+
   return (
     <div className="space-y-6">
       <PageHeader

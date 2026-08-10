@@ -1,11 +1,25 @@
+import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/app/providers/AuthProvider'
+import { logAuthDiagnostic } from '@/lib/monitoring/authDiagnostics'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { RouteSkeleton } from '@/shared/components/feedback/RouteSkeleton'
 
 export function ProtectedRoute() {
   const auth = useAuth()
   const location = useLocation()
+
+  useEffect(() => {
+    if (auth.status === 'checking') {
+      return
+    }
+
+    logAuthDiagnostic(
+      'E.protectedRoute',
+      auth.status === 'authenticated' ? 'allow' : 'redirect',
+      { authStatus: auth.status },
+    )
+  }, [auth.status])
 
   if (auth.status === 'checking') {
     return (

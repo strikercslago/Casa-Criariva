@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session, User } from '@supabase/supabase-js'
 import { isSupabaseConfigured } from '@/app/config/env'
 import { createTimeoutError, getAuthErrorMessage } from '@/app/providers/authErrors'
+import { logAuthDiagnostic, sanitizeAuthError } from '@/lib/monitoring/authDiagnostics'
 import { queryKeys } from '@/lib/query/queryKeys'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import type { AppRole, Profile } from '@/lib/supabase/types'
@@ -64,15 +65,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isMounted = true
 
     async function bootstrapSession() {
+      const startedAt = performance.now()
+      logAuthDiagnostic('B.session', 'start')
+
       const result = await withTimeout(client.auth.getSession(), AUTH_TIMEOUT_MS, createTimeoutError)
-        .then(({ data, error }) => ({ data, errorMessage: getAuthErrorMessage(error) }))
-        .catch((error: Error) => ({ data: null, errorMessage: getAuthErrorMessage(error) }))
+        .then(({ data, error }) => ({
+          data,
+          error,
+          errorMessage: getAuthErrorMessage(error),
+        }))
+        .catch((error: Error) => ({
+          data: null,
+          error,
+          errorMessage: getAuthErrorMessage(error),
+        }))
+
+      const durationMs = Math.round(performance.now() - startedAt)
 
       if (!isMounted) {
         return
       }
 
       if (result.errorMessage || !result.data) {
+        logAuthDiagnostic('B.session', 'error', {
+          durationMs,
+          ...sanitizeAuthError(result.error),
+        })
+
         setState({
           status: 'error',
           session: null,
@@ -81,6 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         return
       }
+
+      logAuthDiagnostic('B.session', 'success', {
+        durationMs,
+        hasSession: Boolean(result.data.session),
+        hasUser: Boolean(result.data.session?.user),
+      })
 
       setState({
         status: result.data.session ? 'authenticated' : 'unauthenticated',
@@ -92,7 +117,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void bootstrapSession()
 
-    const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = client.auth.onAuthStateChange((event, session) => {
+      logAuthDiagnostic('B.session', 'success', {
+        authEvent: event,
+        hasSession: Boolean(session),
+        hasUser: Boolean(session?.user),
+      })
+
       setState({
         status: session ? 'authenticated' : 'unauthenticated',
         session,
@@ -123,6 +154,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Supabase nao configurado.')
       }
 
+      const startedAt = performance.now()
+      logAuthDiagnostic('C.profile', 'start', { table: 'profiles' })
+
       const { data, error } = await withTimeout(
         supabase
           .from('profiles')
@@ -133,9 +167,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createTimeoutError,
       )
 
+      const durationMs = Math.round(performance.now() - startedAt)
+
       if (error) {
+        logAuthDiagnostic('C.profile', 'error', {
+          durationMs,
+          table: 'profiles',
+          ...sanitizeAuthError(error),
+        })
         throw error
       }
+
+      logAuthDiagnostic('C.profile', 'success', {
+        durationMs,
+        count: data ? 1 : 0,
+        table: 'profiles',
+      })
 
       return data
     },
@@ -153,15 +200,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Supabase nao configurado.')
       }
 
+      const startedAt = performance.now()
+      logAuthDiagnostic('D.roles', 'start', { table: 'user_roles' })
+
       const { data, error } = await withTimeout(
         supabase.from('user_roles').select('role').eq('user_id', state.user.id).order('role'),
         AUTH_TIMEOUT_MS,
         createTimeoutError,
       )
 
+      const durationMs = Math.round(performance.now() - startedAt)
+
       if (error) {
+        logAuthDiagnostic('D.roles', 'error', {
+          durationMs,
+          table: 'user_roles',
+          ...sanitizeAuthError(error),
+        })
         throw error
       }
+
+      logAuthDiagnostic('D.roles', 'success', {
+        count: data.length,
+        durationMs,
+        table: 'user_roles',
+      })
 
       return data.map((row) => row.role)
     },
@@ -177,17 +240,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      const startedAt = performance.now()
+      logAuthDiagnostic('A.signInWithPassword', 'start')
+
       const result = await withTimeout(
         supabase.auth.signInWithPassword({ email, password }),
         AUTH_TIMEOUT_MS,
         createTimeoutError,
       )
-        .then(({ data, error }) => ({ data, errorMessage: getAuthErrorMessage(error) }))
-        .catch((error: Error) => ({ data: null, errorMessage: getAuthErrorMessage(error) }))
+        .then(({ data, error }) => ({
+          data,
+          error,
+          errorMessage: getAuthErrorMessage(error),
+        }))
+        .catch((error: Error) => ({
+          data: null,
+          error,
+          errorMessage: getAuthErrorMessage(error),
+        }))
+
+      const durationMs = Math.round(performance.now() - startedAt)
 
       if (result.errorMessage || !result.data) {
+        logAuthDiagnostic('A.signInWithPassword', 'error', {
+          durationMs,
+          ...sanitizeAuthError(result.error),
+        })
+
         return { errorMessage: result.errorMessage ?? 'Nao foi possivel entrar.' }
       }
+
+      logAuthDiagnostic('A.signInWithPassword', 'success', {
+        durationMs,
+        hasSession: Boolean(result.data.session),
+        hasUser: Boolean(result.data.user),
+      })
 
       setState({
         status: result.data.session ? 'authenticated' : 'unauthenticated',
