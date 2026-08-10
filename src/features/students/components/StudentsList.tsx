@@ -8,9 +8,10 @@ import { StudentStatusBadge } from './StudentStatusBadge'
 type StudentsListProps = {
   students: StudentListItem[]
   onOpenStudent: (id: string) => void
+  onPrefetchStudent?: (id: string) => void
 }
 
-export function StudentsList({ students, onOpenStudent }: StudentsListProps) {
+export function StudentsList({ students, onOpenStudent, onPrefetchStudent }: StudentsListProps) {
   return (
     <>
       <div className="hidden md:block">
@@ -26,10 +27,15 @@ export function StudentsList({ students, onOpenStudent }: StudentsListProps) {
           </thead>
           <tbody>
             {students.map((student) => (
-              <tr className="transition-colors hover:bg-muted/60" key={student.id}>
+              <tr
+                className="transition-colors hover:bg-muted/60"
+                key={student.id}
+                onMouseEnter={() => onPrefetchStudent?.(student.id)}
+              >
                 <Td className="text-foreground">
                   <button
                     className="text-left font-medium text-foreground hover:text-primary"
+                    onFocus={() => onPrefetchStudent?.(student.id)}
                     onClick={() => onOpenStudent(student.id)}
                     type="button"
                   >
@@ -50,6 +56,7 @@ export function StudentsList({ students, onOpenStudent }: StudentsListProps) {
                   <IconButton
                     className="ml-auto h-9 w-9"
                     label={`Abrir ${student.full_name}`}
+                    onFocus={() => onPrefetchStudent?.(student.id)}
                     onClick={() => onOpenStudent(student.id)}
                   >
                     <ArrowRight className="h-4 w-4" aria-hidden />
@@ -63,7 +70,11 @@ export function StudentsList({ students, onOpenStudent }: StudentsListProps) {
 
       <div className="grid gap-3 md:hidden">
         {students.map((student) => (
-          <article className="rounded-md border border-border bg-surface p-4 shadow-subtle" key={student.id}>
+          <article
+            className="rounded-md border border-border bg-surface p-4 shadow-subtle"
+            key={student.id}
+            onMouseEnter={() => onPrefetchStudent?.(student.id)}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="truncate text-base font-semibold text-foreground">{student.full_name}</h2>
@@ -87,6 +98,7 @@ export function StudentsList({ students, onOpenStudent }: StudentsListProps) {
 
             <button
               className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded border border-border bg-background px-3 text-sm font-medium"
+              onFocus={() => onPrefetchStudent?.(student.id)}
               onClick={() => onOpenStudent(student.id)}
               type="button"
             >

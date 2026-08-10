@@ -8,7 +8,7 @@ type OverlayProps = {
   title: string
   children: ReactNode
   onClose: () => void
-  side?: 'center' | 'right'
+  side?: 'center' | 'right' | 'wide'
 }
 
 export function Overlay({ isOpen, title, children, onClose, side = 'center' }: OverlayProps) {
@@ -22,9 +22,12 @@ export function Overlay({ isOpen, title, children, onClose, side = 'center' }: O
         aria-modal="true"
         className={cn(
           'fixed bg-surface shadow-elevated',
-          side === 'right'
-            ? 'bottom-0 right-0 top-0 w-full max-w-md border-l border-border'
-            : 'left-1/2 top-1/2 w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-md border border-border',
+          side === 'right' &&
+            'bottom-0 right-0 top-0 w-full max-w-md overflow-y-auto border-l border-border',
+          side === 'wide' &&
+            'bottom-0 left-0 right-0 top-0 overflow-y-auto sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:max-h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:max-w-5xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:border sm:border-border',
+          side === 'center' &&
+            'left-1/2 top-1/2 w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-md border border-border',
         )}
         role="dialog"
         aria-label={title}

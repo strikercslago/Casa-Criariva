@@ -1,35 +1,34 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getUserSafeErrorMessage } from '@/lib/errors/AppError'
 import { EmptyState } from '@/shared/components/feedback/EmptyState'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
-import { useToast } from '@/shared/components/feedback/Toast'
 import { PageHeader } from '@/shared/components/navigation/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
-import { Overlay } from '@/shared/components/ui/Overlay'
 import { Pagination } from '@/shared/components/ui/Pagination'
+import { EnrollmentWizard } from '@/features/students/components/EnrollmentWizard'
 import { StudentDetailDrawer } from '@/features/students/components/StudentDetailDrawer'
 import { StudentFilters } from '@/features/students/components/StudentFilters'
-import { StudentForm } from '@/features/students/components/StudentForm'
 import { StudentsList } from '@/features/students/components/StudentsList'
 import { StudentsSkeleton } from '@/features/students/components/StudentsSkeleton'
+import { getStudent } from '@/features/students/api/studentsApi'
 import { useDebouncedValue } from '@/features/students/hooks/useDebouncedValue'
-import { useCreateStudent, useStudentsList } from '@/features/students/hooks/useStudents'
-import type { StudentFormValues } from '@/features/students/schemas/studentSchema'
+import { useStudentsList } from '@/features/students/hooks/useStudents'
+import { studentsKeys } from '@/features/students/hooks/studentsKeys'
 import type { StudentStatusFilter } from '@/features/students/types/studentTypes'
 
 const PAGE_SIZE = 20
 
 export default function StudentsPage() {
+  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StudentStatusFilter>('all')
   const [page, setPage] = useState(1)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const debouncedSearch = useDebouncedValue(search, 320)
-  const createMutation = useCreateStudent()
-  const { notify } = useToast()
   const selectedStudentId = searchParams.get('aluno')
 
   const filters = useMemo(
@@ -63,19 +62,21 @@ export default function StudentsPage() {
     setSearchParams({ aluno: id })
   }
 
+  function handlePrefetchStudent(id: string) {
+    void queryClient.prefetchQuery({
+      queryFn: () => getStudent(id),
+      queryKey: studentsKeys.detail(id),
+      staleTime: 90_000,
+    })
+  }
+
   function handleCloseStudent() {
     setSearchParams({})
   }
 
-  async function handleCreate(values: StudentFormValues) {
-    try {
-      const student = await createMutation.mutateAsync(values)
-      setIsCreateOpen(false)
-      setPage(1)
-      notify({ title: 'Aluno cadastrado.', description: student.full_name, tone: 'success' })
-    } catch (error) {
-      notify({ title: 'Nao foi possivel cadastrar.', description: getUserSafeErrorMessage(error), tone: 'error' })
-    }
+  function handleEnrollmentCompleted(studentId: string) {
+    setPage(1)
+    setSearchParams({ aluno: studentId })
   }
 
   return (
@@ -143,7 +144,11 @@ export default function StudentsPage() {
 
       {!isInitialLoading && !studentsQuery.isError && students.length > 0 ? (
         <div className="space-y-3">
-          <StudentsList onOpenStudent={handleOpenStudent} students={students} />
+          <StudentsList
+            onOpenStudent={handleOpenStudent}
+            onPrefetchStudent={handlePrefetchStudent}
+            students={students}
+          />
           <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-3 shadow-subtle sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               Pagina {page} de {totalPages}, {totalCount} aluno{totalCount === 1 ? '' : 's'}.
@@ -158,14 +163,11 @@ export default function StudentsPage() {
         </div>
       ) : null}
 
-      <Overlay isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} side="right" title="Novo aluno">
-        <StudentForm
-          isSubmitting={createMutation.isPending}
-          mode="create"
-          onCancel={() => setIsCreateOpen(false)}
-          onSubmit={handleCreate}
-        />
-      </Overlay>
+      <EnrollmentWizard
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCompleted={handleEnrollmentCompleted}
+      />
 
       <StudentDetailDrawer onClose={handleCloseStudent} studentId={selectedStudentId} />
     </div>
