@@ -39,4 +39,23 @@ The first schema should be small and added by domain. Planned entities:
 
 | Table | Columns | Benefited query | Justification |
 | --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+| `profiles` | `id` primary key | `select ... from profiles where id = auth.uid()` | Supports own-profile reads and FK to `auth.users`. |
+| `user_roles` | `(user_id, role)` primary key | `has_role(auth.uid(), 'owner')` and `select role from user_roles where user_id = auth.uid()` | Prevents duplicate roles and supports RLS role checks without an additional redundant `user_id` index. |
+
+## Applied Auth Foundation
+
+Migration: `20260810192204_auth_foundation.sql`.
+
+Created:
+
+- Enum `public.app_role`: `owner`, `admin`, `teacher`.
+- Table `public.profiles`.
+- Table `public.user_roles`.
+- Function `public.set_updated_at()`.
+- Function `public.handle_new_auth_user()`.
+- Function `public.has_role(uuid, public.app_role)`.
+- Function `public.current_user_is_owner()`.
+- Trigger `profiles_set_updated_at`.
+- Trigger `on_auth_user_created_create_profile`.
+
+No student, guardian, class, billing, finance, event, material or idea tables were created in this phase.
