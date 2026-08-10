@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test'
 
-test('loads foundation shell and navigates between lazy routes', async ({ page }) => {
+test('protects private routes and shows login without public signup', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'Inicio' })).toBeVisible()
-  await page.getByRole('link', { name: 'Alunos' }).click()
-  await expect(page.getByRole('heading', { name: 'Alunos' })).toBeVisible()
-  await page.getByRole('link', { name: 'Financeiro' }).click()
-  await expect(page.getByRole('heading', { name: 'Financeiro' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Entrar' })).toBeVisible()
+  await expect(page.getByText('Cadastro publico nao esta disponivel.')).toBeVisible()
+
+  await page.goto('/alunos')
+  await expect(page).toHaveURL(/\/login$/)
 })
