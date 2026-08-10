@@ -3,14 +3,13 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
+import { forwardRef } from 'react'
 import { cn } from '@/shared/utils/cn'
 
-export function Textarea({
-  className,
-  label,
-  id,
-  ...props
-}: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }
+>(function Textarea({ className, label, id, ...props }, ref) {
   const inputId = id ?? props.name
 
   return (
@@ -22,19 +21,17 @@ export function Textarea({
           className,
         )}
         id={inputId}
+        ref={ref}
         {...props}
       />
     </label>
   )
-}
+})
 
-export function Select({
-  className,
-  label,
-  id,
-  children,
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
+export const Select = forwardRef<
+  HTMLSelectElement,
+  SelectHTMLAttributes<HTMLSelectElement> & { label: string }
+>(function Select({ className, label, id, children, ...props }, ref) {
   const inputId = id ?? props.name
 
   return (
@@ -43,13 +40,14 @@ export function Select({
       <select
         className={cn('h-10 rounded border border-border bg-surface px-3 text-sm shadow-subtle', className)}
         id={inputId}
+        ref={ref}
         {...props}
       >
         {children}
       </select>
     </label>
   )
-}
+})
 
 export function Checkbox({
   className,

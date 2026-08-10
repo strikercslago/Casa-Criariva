@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-Phase 2 adds Supabase Auth foundation: protected routes, login, logout, profile and roles cache. Real students, finance, billing and agenda logic are intentionally not implemented yet.
+Phase 3 adds the first real domain module: Students. Guardians, classes, billing, finance, events, materials, ideas and reports remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -40,3 +40,35 @@ Route guards use provider state only:
 - authenticated users visiting `/login` return to dashboard.
 
 Logout calls Supabase Auth once, clears private Query cache and redirects to `/login`.
+
+## Students Module Pattern
+
+Students is the reference module for the next domains. Its code is isolated under `src/features/students`:
+
+- `api`: pure Supabase data operations, no React state.
+- `hooks`: TanStack Query hooks and query keys.
+- `schemas`: Zod form validation.
+- `types`: database-backed domain types.
+- `utils`: status, dates and error mapping.
+- `components`: list, filters, form, skeleton and detail drawer.
+- `pages`: route-level orchestration for `/alunos`.
+
+The list route selects only fields shown in the list:
+
+`id, full_name, preferred_name, birth_date, enrollment_date, status`
+
+Detail/edit loads notes and audit fields only when a student is opened.
+
+Student details currently use a side drawer backed by the `?aluno=<id>` query parameter. This keeps navigation fast and preserves a URL state for browser history. A future full page can replace the drawer when guardians, classes, billing and attendance need larger nested surfaces.
+
+Students query keys live in `src/features/students/hooks/studentsKeys.ts`:
+
+- `studentsKeys.all`
+- `studentsKeys.lists()`
+- `studentsKeys.list(filters)`
+- `studentsKeys.details()`
+- `studentsKeys.detail(id)`
+
+The route uses server-side pagination with 20 rows per page, debounced search at 320 ms and status filters (`all`, `active`, `inactive`, `archived`). Mutations update the detail cache and invalidate only students list queries.
+
+Route chunk prefetch already happens through the sidebar hover/focus mechanism. The first students list is not prefetched because that would create a REST request before clear user intent.
