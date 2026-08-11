@@ -366,6 +366,8 @@ function HistoryTab({ events }: { events: AuditEventRow[] }) {
     () => ({
       'billing_plan.created': 'Mensalidade configurada',
       'enrollment.created': 'Matricula em turma criada',
+      'enrollment.ended': 'Matricula encerrada',
+      'enrollment.transferred': 'Matricula transferida',
       'guardian.linked': 'Responsavel vinculado',
       'guardian.linked_to_student': 'Responsavel vinculado',
       'guardian.relationship_updated': 'Vinculo com responsavel atualizado',
