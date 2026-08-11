@@ -82,6 +82,11 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-11 | Classes route chunk | 35.04 KB / 9.62 KB gzip | Lazy route with list, forms, detail drawer, enrollment actions and hooks |
 | 2026-08-11 | Unit/component tests after Classes | 17.84 s | 26 files, 46 tests |
 | 2026-08-11 | E2E after Classes | 9.8 s | 4 Chromium tests: auth, students, guardians and classes integration smoke |
+| 2026-08-11 | Production build after Agenda/Attendance | 11.14 s | Vite internal build after final implementation |
+| 2026-08-11 | Initial JS bundle after Agenda/Attendance | 479.34 KB / 143.59 KB gzip | Main shell increased by about 0.11 KB gzip from Classes |
+| 2026-08-11 | Agenda route chunk | 15.21 KB / 4.91 KB gzip | Lazy route with day/week list and attendance drawer |
+| 2026-08-11 | Unit/component tests after Agenda/Attendance | 26.40 s | 29 files, 51 tests |
+| 2026-08-11 | E2E after Agenda/Attendance | 10.8 s | 5 Chromium tests: auth, agenda, students, guardians and classes |
 
 ## Startup Notes
 
@@ -188,3 +193,15 @@ Opening a class detail performs detail-only reads:
 - `audit_events` for the class timeline, limited to 50 rows.
 
 Mutations use RPCs and scoped invalidation. Student-affecting actions also invalidate the affected Student 360 relation cache, so `/alunos?aluno=<id>` reflects class changes without a browser reload.
+
+## Agenda Request Budget
+
+Target for opening `/agenda` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1`: 0 list requests.
+- `/rpc/list_agenda_sessions`: 1 cold request for the selected day/week.
+
+`list_agenda_sessions` materializes needed sessions and returns the agenda cards in one request. Opening a session performs one `get_session_attendance` RPC. Saving attendance performs one `save_session_attendance` RPC regardless of student count.
+
+Student 360 attendance history adds one detail-only `attendance_records` request after the student profile opens; it is not loaded by the students list.

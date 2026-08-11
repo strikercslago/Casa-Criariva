@@ -240,3 +240,41 @@ Existing relevant indexes:
 | `enrollments` | `enrollments_student_status_idx` | Student 360 enrollment history. |
 | `enrollments` | `enrollments_active_student_class_uidx` | Prevents duplicate active enrollment for the same student/class. |
 | `audit_events` | `audit_events_entity_created_at_idx` | Class and Student 360 timelines. |
+
+## Agenda And Attendance Foundation
+
+Migrations:
+
+- `20260811150000_agenda_attendance_foundation.sql`
+- `20260811153000_fix_attendance_expected_enrollments.sql`
+
+Created:
+
+- Enum `public.class_session_status`: `planned`, `completed`, `cancelled`.
+- Enum `public.attendance_status`: `present`, `absent`, `excused`.
+- Table `public.class_sessions`.
+- Table `public.attendance_records`.
+
+`class_sessions` stores concrete occurrences with `session_date`, `start_time` and `end_time`; this preserves history when a recurring `class_schedule` changes later. `schedule_id` is nullable so extra/manual classes can belong to a class without a recurring schedule.
+
+`attendance_records` stores explicit decisions only. Missing rows mean attendance is pending, not absent.
+
+Created functions:
+
+- `ensure_class_sessions(date, date)`: materializes recurring sessions for a bounded window and is idempotent.
+- `list_agenda_sessions(date, date)`: ensures sessions and returns agenda cards with expected student and attendance totals.
+- `get_session_attendance(uuid)`: returns expected students for one session based on enrollment dates.
+- `save_session_attendance(jsonb)`: saves attendance in one transaction and writes one consolidated audit event.
+- `update_class_session_status(jsonb)`: cancels/restores a session without deleting it.
+- `create_extra_class_session(jsonb)`: prepares extra/manual class sessions.
+
+Indexes:
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `class_sessions` | `class_sessions_recurring_occurrence_uidx` | Idempotent recurring materialization by class/schedule/date. |
+| `class_sessions` | `class_sessions_manual_occurrence_uidx` | Prevent duplicate extra sessions for same class/date/time. |
+| `class_sessions` | `class_sessions_date_time_idx` | Agenda day/week windows ordered by date/time. |
+| `class_sessions` | `class_sessions_class_date_idx` | Session lookup by class/date and future class history. |
+| `attendance_records` | `attendance_records_session_student_uidx` | Unique attendance per student/session and session detail loading. |
+| `attendance_records` | `attendance_records_student_session_idx` | Student 360 attendance history by student. |

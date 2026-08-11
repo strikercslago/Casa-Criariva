@@ -119,3 +119,12 @@ Frontend safety:
 - Class RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
 - `audit_events` still has no direct frontend insert grant; class/enrollment actions write audit events through secured RPCs.
 - Owner simulation validated create, list, add student, transfer, end enrollment, schedule update, archive/restore, overlap rejection and transfer rollback to a full class inside a rollback transaction with `0` residual class rows.
+
+## Agenda And Attendance Security
+
+- `class_sessions` and `attendance_records` have RLS enabled.
+- Anonymous REST access to both tables is blocked with `401` / PostgreSQL `42501`.
+- Anonymous RPC access to `list_agenda_sessions` and `save_session_attendance` is blocked with `401` / PostgreSQL `42501`.
+- Agenda/attendance RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
+- `save_session_attendance` records one consolidated audit event instead of one audit row per student.
+- Owner simulation validated idempotent session materialization, expected students by enrollment dates, batch attendance save, cancelled-session rejection and rollback with `0` residual rows.

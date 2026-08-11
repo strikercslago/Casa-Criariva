@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-The current real domain modules are Students, Student 360, Guardians and Classes. Billing, finance, events, materials, ideas and reports remain intentionally outside this phase.
+The current real domain modules are Students, Student 360, Guardians, Classes and Agenda/Attendance. Billing, finance, events, materials, ideas and reports remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -125,3 +125,18 @@ Phase 5 turns `/turmas` into a real lazy domain module under `src/features/class
 The list uses `list_classes` to avoid N+1 schedule/enrollment counts. The detail drawer loads one class, schedules, enrollments with student summaries and class audit events only when opened. Links to students navigate to `/alunos?aluno=<id>`, keeping Student 360 as the single student profile surface.
 
 Class mutations invalidate class lists/details plus affected Student 360 relation caches. Transfer is not modeled in UI state; it is a single database RPC that ends the source enrollment and creates the target enrollment atomically.
+
+## Agenda And Attendance Pattern
+
+Phase 6 turns `/agenda` into the daily operational attendance surface under `src/features/agenda`:
+
+- `api`: agenda/session RPCs and attendance payloads.
+- `hooks`: TanStack Query hooks and invalidation.
+- `types`: generated session/attendance enum and RPC result types.
+- `utils`: date handling, labels, attendance rate and error mapping.
+- `components`: session list and attendance drawer.
+- `pages`: day/week agenda orchestration.
+
+The route intentionally avoids a heavy calendar widget. It loads a bounded date window through `list_agenda_sessions`, which materializes only the needed recurring sessions and returns list cards with expected-student and attendance totals.
+
+Attendance is edited in a drawer and saved by one RPC call. Student-affecting attendance mutations invalidate the affected Student 360 relation cache so the `Frequencia` tab stays current.

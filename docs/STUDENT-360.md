@@ -66,3 +66,9 @@ Student history labels include class enrollment events created by Phase 5:
 - `enrollment.created`
 - `enrollment.ended`
 - `enrollment.transferred`
+
+## Attendance Consistency
+
+Phase 6 adds a `Frequencia` tab to Student 360. It reads `attendance_records` joined to `class_sessions` and `classes`, showing the student's attendance history and presence rate.
+
+Attendance changes from `/agenda` invalidate the affected Student 360 relation cache, so the student profile reflects saved attendance without a browser reload.
