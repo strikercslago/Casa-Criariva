@@ -286,6 +286,241 @@ export type Database = {
           },
         ]
       }
+      event_registration_sessions: {
+        Row: {
+          created_at: string
+          registration_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          registration_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          registration_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registration_sessions_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "event_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registration_sessions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "event_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_registrations: {
+        Row: {
+          base_amount: number
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          discount_amount: number
+          event_id: string
+          final_amount: number | null
+          financial_due_date: string | null
+          financial_entry_id: string | null
+          guardian_id: string | null
+          guest_birth_date: string | null
+          guest_full_name: string | null
+          id: string
+          notes: string | null
+          registered_by: string | null
+          registration_type: Database["public"]["Enums"]["event_registration_type"]
+          status: Database["public"]["Enums"]["event_registration_status"]
+          student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_amount: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          discount_amount?: number
+          event_id: string
+          final_amount?: number | null
+          financial_due_date?: string | null
+          financial_entry_id?: string | null
+          guardian_id?: string | null
+          guest_birth_date?: string | null
+          guest_full_name?: string | null
+          id?: string
+          notes?: string | null
+          registered_by?: string | null
+          registration_type?: Database["public"]["Enums"]["event_registration_type"]
+          status?: Database["public"]["Enums"]["event_registration_status"]
+          student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_amount?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          discount_amount?: number
+          event_id?: string
+          final_amount?: number | null
+          financial_due_date?: string | null
+          financial_entry_id?: string | null
+          guardian_id?: string | null
+          guest_birth_date?: string | null
+          guest_full_name?: string | null
+          id?: string
+          notes?: string | null
+          registered_by?: string | null
+          registration_type?: Database["public"]["Enums"]["event_registration_type"]
+          status?: Database["public"]["Enums"]["event_registration_status"]
+          student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_financial_entry_id_fkey"
+            columns: ["financial_entry_id"]
+            isOneToOne: true
+            referencedRelation: "financial_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_sessions: {
+        Row: {
+          capacity_override: number | null
+          created_at: string
+          end_time: string
+          event_id: string
+          id: string
+          notes: string | null
+          price_override: number | null
+          session_date: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          capacity_override?: number | null
+          created_at?: string
+          end_time: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          price_override?: number | null
+          session_date: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          capacity_override?: number | null
+          created_at?: string
+          end_time?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          price_override?: number | null
+          session_date?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          base_price: number
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          capacity: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          name: string
+          notes: string | null
+          registration_end_date: string | null
+          registration_start_date: string | null
+          status: Database["public"]["Enums"]["event_status"]
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          name: string
+          notes?: string | null
+          registration_end_date?: string | null
+          registration_start_date?: string | null
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          name?: string
+          notes?: string | null
+          registration_end_date?: string | null
+          registration_start_date?: string | null
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       financial_categories: {
         Row: {
           created_at: string
@@ -910,11 +1145,24 @@ export type Database = {
         Args: { schedules: Json }
         Returns: undefined
       }
+      assert_event_capacity_available: {
+        Args: {
+          p_event_id: string
+          p_excluding_registration_id?: string
+          p_registration_type: Database["public"]["Enums"]["event_registration_type"]
+          p_session_ids?: string[]
+        }
+        Returns: undefined
+      }
+      cancel_event_registration: { Args: { payload: Json }; Returns: string }
       cancel_financial_entry: { Args: { payload: Json }; Returns: string }
       cancel_monthly_fee: { Args: { payload: Json }; Returns: string }
       complete_student_enrollment: { Args: { payload: Json }; Returns: string }
+      confirm_event_registration: { Args: { payload: Json }; Returns: string }
       create_cash_account: { Args: { payload: Json }; Returns: string }
       create_class_with_schedules: { Args: { payload: Json }; Returns: string }
+      create_event: { Args: { payload: Json }; Returns: string }
+      create_event_registration: { Args: { payload: Json }; Returns: string }
       create_extra_class_session: { Args: { payload: Json }; Returns: string }
       create_financial_category: { Args: { payload: Json }; Returns: string }
       create_financial_entry: { Args: { payload: Json }; Returns: string }
@@ -936,6 +1184,10 @@ export type Database = {
         Args: { p_end_date: string; p_start_date: string }
         Returns: number
       }
+      ensure_event_registration_financial_entry: {
+        Args: { p_registration_id: string }
+        Returns: string
+      }
       ensure_monthly_fees: {
         Args: { p_reference_month: string }
         Returns: {
@@ -951,6 +1203,10 @@ export type Database = {
           generated_count: number
           reference_month: string
         }[]
+      }
+      event_participant_name: {
+        Args: { p_guest_full_name: string; p_student_id: string }
+        Returns: string
       }
       finance_cash_flow_rows: {
         Args: { p_end_date: string; p_start_date: string }
@@ -1016,6 +1272,19 @@ export type Database = {
           pending_amount: number
           received_amount: number
           reference_month: string
+        }[]
+      }
+      get_event_finance_summary: {
+        Args: { p_event_id: string }
+        Returns: {
+          event_id: string
+          expected_revenue: number
+          free_count: number
+          paid_count: number
+          partial_count: number
+          pending_count: number
+          receivable_amount: number
+          received_amount: number
         }[]
       }
       get_finance_month_summary: {
@@ -1139,6 +1408,72 @@ export type Database = {
           status: Database["public"]["Enums"]["class_status"]
           total_count: number
           updated_at: string
+        }[]
+      }
+      list_event_registrations: {
+        Args: {
+          p_event_id: string
+          p_finance_filter?: string
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_status_filter?: string
+        }
+        Returns: {
+          balance: number
+          base_amount: number
+          created_at: string
+          discount_amount: number
+          event_id: string
+          final_amount: number
+          finance_status: string
+          financial_due_date: string
+          financial_entry_id: string
+          guardian_email: string
+          guardian_id: string
+          guardian_name: string
+          guardian_phone: string
+          guest_birth_date: string
+          guest_full_name: string
+          notes: string
+          participant_name: string
+          received_amount: number
+          registration_id: string
+          registration_type: Database["public"]["Enums"]["event_registration_type"]
+          selected_sessions: Json
+          selected_sessions_count: number
+          status: Database["public"]["Enums"]["event_registration_status"]
+          student_id: string
+          total_count: number
+        }[]
+      }
+      list_events: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_status_filter?: string
+          p_type_filter?: string
+        }
+        Returns: {
+          available_spots: number
+          base_price: number
+          capacity: number
+          confirmed_count: number
+          event_id: string
+          event_type: Database["public"]["Enums"]["event_type"]
+          expected_revenue: number
+          first_session_date: string
+          last_session_date: string
+          name: string
+          receivable_amount: number
+          received_amount: number
+          registration_end_date: string
+          registration_start_date: string
+          session_count: number
+          status: Database["public"]["Enums"]["event_status"]
+          total_count: number
+          waitlisted_count: number
         }[]
       }
       list_finance_cash_flow: {
@@ -1343,6 +1678,16 @@ export type Database = {
         }[]
       }
       save_session_attendance: { Args: { payload: Json }; Returns: string }
+      settle_event_registration: {
+        Args: { payload: Json }
+        Returns: {
+          balance: number
+          computed_status: string
+          financial_entry_id: string
+          settled_amount: number
+          settlement_id: string
+        }[]
+      }
       settle_financial_entry: {
         Args: { payload: Json }
         Returns: {
@@ -1358,6 +1703,7 @@ export type Database = {
       update_class_session_status: { Args: { payload: Json }; Returns: string }
       update_class_status: { Args: { payload: Json }; Returns: string }
       update_class_with_schedules: { Args: { payload: Json }; Returns: string }
+      update_event_status: { Args: { payload: Json }; Returns: string }
       update_financial_category: { Args: { payload: Json }; Returns: string }
       update_financial_entry: { Args: { payload: Json }; Returns: string }
       update_guardian_contact: { Args: { payload: Json }; Returns: string }
@@ -1379,6 +1725,14 @@ export type Database = {
       class_session_status: "planned" | "completed" | "cancelled"
       class_status: "active" | "inactive" | "archived"
       enrollment_status: "active" | "paused" | "ended"
+      event_registration_status:
+        | "pending"
+        | "confirmed"
+        | "waitlisted"
+        | "cancelled"
+      event_registration_type: "full_event" | "selected_sessions"
+      event_status: "draft" | "open" | "closed" | "completed" | "cancelled"
+      event_type: "colony" | "workshop" | "special_activity" | "other"
       financial_entry_type: "income" | "expense"
       financial_lifecycle_status: "active" | "cancelled"
       financial_settlement_status: "active" | "reversed"
@@ -1521,6 +1875,15 @@ export const Constants = {
       class_session_status: ["planned", "completed", "cancelled"],
       class_status: ["active", "inactive", "archived"],
       enrollment_status: ["active", "paused", "ended"],
+      event_registration_status: [
+        "pending",
+        "confirmed",
+        "waitlisted",
+        "cancelled",
+      ],
+      event_registration_type: ["full_event", "selected_sessions"],
+      event_status: ["draft", "open", "closed", "completed", "cancelled"],
+      event_type: ["colony", "workshop", "special_activity", "other"],
       financial_entry_type: ["income", "expense"],
       financial_lifecycle_status: ["active", "cancelled"],
       financial_settlement_status: ["active", "reversed"],
