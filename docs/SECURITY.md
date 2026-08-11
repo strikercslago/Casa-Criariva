@@ -99,3 +99,13 @@ Frontend safety:
 - The frontend uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; no service role is used in the browser.
 - `complete_student_enrollment(payload jsonb)` is `SECURITY DEFINER` with fixed `search_path`, owner validation, no dynamic SQL and no exposed audit insert grant.
 - A forced invalid schedule inside the RPC failed on `class_schedules_time_order`; follow-up counts for student, guardian, class, enrollment, billing plan and audit event were all `0`, confirming atomic rollback.
+
+## Guardians Security
+
+- Phase 4 does not expose service role, database password, secret keys or access tokens.
+- `.env.local` remains ignored and contains only browser-safe Supabase configuration.
+- Existing RLS remains enabled on `guardians`, `student_guardians`, `students` and `audit_events`.
+- Anonymous REST access to `guardians` is blocked with `401` / PostgreSQL `42501`.
+- New guardian RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
+- `audit_events` still has no direct frontend insert grant; guardian actions write audit events through the secured RPCs.
+- Owner simulation validated create, edit, link, relationship update, unlink and phone search inside a rollback transaction with `0` residual rows.

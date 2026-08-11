@@ -174,3 +174,33 @@ Partial unique indexes prevent duplicate active enrollment for the same student/
 - writes audit events.
 
 The function is `SECURITY DEFINER` only so it can write `audit_events` without granting arbitrary audit inserts to the frontend. It validates `auth.uid()`, requires `current_user_is_owner()`, fixes `search_path = public` and uses no dynamic SQL.
+
+## Guardians Management
+
+Migrations:
+
+- `20260811003000_guardians_management_functions.sql`
+- `20260811120500_fix_guardian_optional_link_json_null.sql`
+
+No new data table was needed for Phase 4. The real schema already had the required normalized model:
+
+- guardian-owned contact data in `guardians`;
+- relationship-specific flags in `student_guardians`;
+- owner-readable timeline in `audit_events`.
+
+Decision on guardian status: Phase 4 does not add `active`, `archived` or `archived_at` to `guardians`. The module does not expose physical deletion, and responsible parties connected to student history should remain visible. Archiving can be introduced later only when there is a clear operational workflow for hiding unused standalone contacts without losing history.
+
+Created functions:
+
+- `normalize_phone_digits(text)`: derived digit-only phone search helper.
+- `list_guardians(text, text, integer, integer)`: paged list with linked-student and role summary.
+- `create_guardian_with_optional_student(jsonb)`: atomic guardian creation with optional link and audit events.
+- `update_guardian_contact(jsonb)`: updates only guardian-owned contact fields and records audit.
+- `upsert_guardian_student_link(jsonb)`: creates or edits only relationship fields in `student_guardians`.
+- `unlink_guardian_student(jsonb)`: removes one link without deleting the guardian.
+
+Index:
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `guardians` | `guardians_phone_digits_trgm_idx` | Digit-only phone search such as `54999999999` against formatted stored values like `(54) 99999-9999`. |

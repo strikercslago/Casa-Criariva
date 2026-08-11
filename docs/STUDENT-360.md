@@ -46,3 +46,13 @@ The list page does not join these tables. Related data is queried only when the 
 - RLS is enabled on all new tables.
 - Anonymous REST access is blocked.
 - Forced RPC failure leaves zero residual student, guardian, class, enrollment, billing or audit rows.
+
+## Guardians Module Consistency
+
+Phase 4 edits `guardians` and `student_guardians` directly through owner-secured RPCs. Student 360 reads those same tables, so changes made in `/responsaveis` appear in the student profile after TanStack Query invalidation.
+
+Student history labels include guardian events created by Phase 4:
+
+- `guardian.linked_to_student`
+- `guardian.relationship_updated`
+- `guardian.unlinked_from_student`

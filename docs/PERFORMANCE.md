@@ -70,6 +70,12 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-10 | Students route chunk after Student 360 | 61.02 KB / 15.68 KB gzip | Enrollment wizard, Student 360 profile, relation hooks and lightweight detail prefetch isolated in lazy route |
 | 2026-08-10 | Unit/component tests after Student 360 | 24.42 s | 15 files, 27 tests |
 | 2026-08-10 | E2E after Student 360 | 5.7 s | 2 Chromium tests: auth smoke and mocked 360 enrollment flow |
+| 2026-08-11 | Baseline before Guardians | 9.10 s | Vite internal build; `/responsaveis` placeholder chunk was 0.28 KB / 0.23 KB gzip |
+| 2026-08-11 | Production build after Guardians | 11.75 s | Vite internal build after the module implementation |
+| 2026-08-11 | Initial JS bundle after Guardians | 479.04 KB / 143.43 KB gzip | Main shell increased by about 0.06 KB gzip |
+| 2026-08-11 | Guardians route chunk | 33.72 KB / 8.75 KB gzip | Lazy route with list, forms, detail drawer and hooks |
+| 2026-08-11 | Unit/component tests after Guardians | 20.09 s | 20 files, 35 tests |
+| 2026-08-11 | E2E after Guardians | 5.7 s | 3 Chromium tests: auth, students and guardians integration smoke |
 
 ## Startup Notes
 
@@ -133,3 +139,28 @@ After a student is opened, Student 360 makes detail-only relation requests:
 - `audit_events` limited to 50 rows
 
 History is not loaded by the list and is not preloaded for every row. The route chunk remains lazy, and the heavier profile code is still isolated from initial app startup.
+
+## Guardians Request Budget
+
+Target for opening `/responsaveis` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1`: 0 list requests.
+- `/rpc/list_guardians`: 1 cold list request.
+- Cached return within `staleTime`: renders cache immediately and refreshes only when invalidated/stale.
+
+Guardian list query is centralized in `list_guardians(search, role, page, page_size)`. It returns guardian contact fields, linked-student summaries and aggregate relationship flags in one paged request, avoiding one query per responsible party.
+
+Opening a guardian detail performs detail-only reads:
+
+- `guardians` with embedded `student_guardians` and student summary;
+- `audit_events` for the guardian timeline, limited to 50 rows.
+
+Mutations use RPCs:
+
+- create: `create_guardian_with_optional_student`;
+- edit contact: `update_guardian_contact`;
+- link/edit relationship: `upsert_guardian_student_link`;
+- unlink: `unlink_guardian_student`.
+
+Relationship changes invalidate the guardian list/detail and the affected Student 360 cache. No browser reload is used.

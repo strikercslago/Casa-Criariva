@@ -93,3 +93,19 @@ Student 360 query keys live in `src/features/students/hooks/student360Keys.ts`:
 - `student360Keys.relations.detail(studentId)`
 
 `useCompleteStudentEnrollment` invalidates the students list, active class list and the new student's 360 relation cache. Existing older students render fallback messages when they have no related rows.
+
+## Guardians Module Pattern
+
+Phase 4 turns `/responsaveis` into a real lazy domain module under `src/features/guardians`:
+
+- `api`: Supabase RPC/REST operations.
+- `hooks`: TanStack Query hooks and query keys.
+- `schemas`: Zod validation for contact and relationship forms.
+- `types`: database-backed guardian and relationship types.
+- `utils`: phone normalization, WhatsApp and role labels.
+- `components`: filters, list, create drawer, relationship form and detail drawer.
+- `pages`: route orchestration for `/responsaveis` and `/responsaveis/:guardianId`.
+
+The list uses `list_guardians` to avoid N+1 queries. The detail route loads one guardian, its linked students and guardian audit events only when opened. Links to students navigate with React Router to `/alunos?aluno=<id>`, so the Student 360 drawer remains the single student profile surface.
+
+Guardian contact mutations invalidate guardian lists/details and the Student 360 caches of linked students. Relationship mutations invalidate guardian caches and the affected student's detail/360 relation keys. There is no second source of truth for relationship flags.
