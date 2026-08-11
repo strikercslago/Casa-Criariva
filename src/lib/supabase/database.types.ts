@@ -391,6 +391,10 @@ export type Database = {
     }
     Functions: {
       complete_student_enrollment: { Args: { payload: Json }; Returns: string }
+      create_guardian_with_optional_student: {
+        Args: { payload: Json }
+        Returns: string
+      }
       current_user_is_owner: { Args: never; Returns: boolean }
       has_role: {
         Args: {
@@ -398,6 +402,37 @@ export type Database = {
           check_user_id: string
         }
         Returns: boolean
+      }
+      list_guardians: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_role_filter?: string
+          p_search?: string
+        }
+        Returns: {
+          can_pick_up: boolean
+          created_at: string
+          email: string
+          full_name: string
+          guardian_id: string
+          is_emergency_contact: boolean
+          is_financial_responsible: boolean
+          is_primary_contact: boolean
+          linked_students: Json
+          notes: string
+          phone: string
+          students_count: number
+          total_count: number
+          updated_at: string
+        }[]
+      }
+      normalize_phone_digits: { Args: { phone_value: string }; Returns: string }
+      unlink_guardian_student: { Args: { payload: Json }; Returns: undefined }
+      update_guardian_contact: { Args: { payload: Json }; Returns: string }
+      upsert_guardian_student_link: {
+        Args: { payload: Json }
+        Returns: undefined
       }
     }
     Enums: {
