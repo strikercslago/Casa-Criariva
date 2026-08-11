@@ -18,6 +18,7 @@ import {
 import type { StudentFormValues } from '@/features/students/schemas/studentSchema'
 import type {
   AuditEventRow,
+  AttendanceRecordWithSession,
   BillingPlanWithGuardian,
   EnrollmentWithClass,
   StudentGuardianLink,
@@ -30,6 +31,8 @@ import {
   formatSchedules,
   normalizePhoneForWhatsApp,
 } from '@/features/students/utils/student360Format'
+import { attendanceStatusLabels } from '@/features/agenda/utils/agendaFormat'
+import { formatTimeRange } from '@/features/agenda/utils/agendaDates'
 
 type Student360ProfileProps = {
   student: StudentRow
@@ -151,6 +154,7 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
                 { label: 'Visao geral', value: 'overview' },
                 { label: 'Responsaveis', value: 'guardians' },
                 { label: 'Matriculas', value: 'enrollments' },
+                { label: 'Frequencia', value: 'attendance' },
                 { label: 'Financeiro', value: 'billing' },
                 { label: 'Historico', value: 'history' },
               ].map((tab) => (
@@ -168,6 +172,7 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
           {activeTab === 'overview' ? <OverviewTab relations={relations} student={student} /> : null}
           {activeTab === 'guardians' ? <GuardiansTab guardians={relations.guardians} /> : null}
           {activeTab === 'enrollments' ? <EnrollmentsTab enrollments={relations.enrollments} /> : null}
+          {activeTab === 'attendance' ? <AttendanceTab records={relations.attendanceRecords} /> : null}
           {activeTab === 'billing' ? <BillingTab billingPlans={relations.billingPlans} /> : null}
           {activeTab === 'history' ? <HistoryTab events={relations.auditEvents} /> : null}
         </div>
@@ -361,6 +366,48 @@ function BillingTab({ billingPlans }: { billingPlans: BillingPlanWithGuardian[] 
   )
 }
 
+function AttendanceTab({ records }: { records: AttendanceRecordWithSession[] }) {
+  if (records.length === 0) {
+    return <EmptyPanel title="Frequencia nao registrada" description="Este aluno ainda nao possui chamadas salvas." />
+  }
+
+  const present = records.filter((record) => record.status === 'present').length
+  const attendanceRate = Math.round((present / records.length) * 100)
+
+  return (
+    <section className="grid gap-4">
+      <div className="rounded-md border border-border bg-background p-4 text-sm">
+        <p className="text-muted-foreground">Taxa de presenca</p>
+        <p className="mt-1 text-3xl font-semibold text-foreground">{attendanceRate}%</p>
+        <p className="mt-1 text-muted-foreground">
+          {present} presenca{present === 1 ? '' : 's'} em {records.length} chamada{records.length === 1 ? '' : 's'} registrada{records.length === 1 ? '' : 's'}.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {records.map((record) => (
+          <article className="rounded-md border border-border bg-background p-4" key={record.id}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-semibold text-foreground">{record.session?.class?.name ?? 'Turma'}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {record.session
+                    ? `${formatStudentDate(record.session.session_date)} - ${formatTimeRange(record.session.start_time, record.session.end_time)}`
+                    : 'Aula nao encontrada'}
+                </p>
+              </div>
+              <Badge tone={record.status === 'present' ? 'success' : record.status === 'excused' ? 'warning' : 'danger'}>
+                {attendanceStatusLabels[record.status]}
+              </Badge>
+            </div>
+            {record.notes ? <p className="mt-3 text-sm text-muted-foreground">{record.notes}</p> : null}
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function HistoryTab({ events }: { events: AuditEventRow[] }) {
   const labels = useMemo(
     () => ({
@@ -368,6 +415,8 @@ function HistoryTab({ events }: { events: AuditEventRow[] }) {
       'enrollment.created': 'Matricula em turma criada',
       'enrollment.ended': 'Matricula encerrada',
       'enrollment.transferred': 'Matricula transferida',
+      'attendance.recorded': 'Frequencia registrada',
+      'attendance.updated': 'Frequencia atualizada',
       'guardian.linked': 'Responsavel vinculado',
       'guardian.linked_to_student': 'Responsavel vinculado',
       'guardian.relationship_updated': 'Vinculo com responsavel atualizado',

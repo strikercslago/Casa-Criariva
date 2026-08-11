@@ -8,6 +8,8 @@ export type ClassScheduleRow = Database['public']['Tables']['class_schedules']['
 export type EnrollmentRow = Database['public']['Tables']['enrollments']['Row']
 export type StudentBillingPlanRow = Database['public']['Tables']['student_billing_plans']['Row']
 export type AuditEventRow = Database['public']['Tables']['audit_events']['Row']
+export type AttendanceRecordRow = Database['public']['Tables']['attendance_records']['Row']
+export type ClassSessionRow = Database['public']['Tables']['class_sessions']['Row']
 
 export type StudentGuardianLink = Database['public']['Tables']['student_guardians']['Row'] & {
   guardian: GuardianRow | null
@@ -25,10 +27,19 @@ export type BillingPlanWithGuardian = StudentBillingPlanRow & {
   financial_guardian: GuardianRow | null
 }
 
+export type AttendanceRecordWithSession = AttendanceRecordRow & {
+  session:
+    | (ClassSessionRow & {
+        class: ClassRow | null
+      })
+    | null
+}
+
 export type Student360Data = {
-  guardians: StudentGuardianLink[]
-  enrollments: EnrollmentWithClass[]
+  attendanceRecords: AttendanceRecordWithSession[]
   billingPlans: BillingPlanWithGuardian[]
+  enrollments: EnrollmentWithClass[]
+  guardians: StudentGuardianLink[]
   auditEvents: AuditEventRow[]
 }
 

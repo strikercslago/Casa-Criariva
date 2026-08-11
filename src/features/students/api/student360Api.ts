@@ -5,6 +5,7 @@ import { withTimeout } from '@/shared/utils/withTimeout'
 import type { EnrollmentWizardValues } from '@/features/students/schemas/enrollmentWizardSchema'
 import type {
   BillingPlanWithGuardian,
+  AttendanceRecordWithSession,
   ClassWithSchedules,
   CompleteEnrollmentPayload,
   CompleteEnrollmentResult,
@@ -91,7 +92,7 @@ export async function listClassesForEnrollment(): Promise<ClassWithSchedules[]> 
 export async function getStudent360Data(studentId: string): Promise<Student360Data> {
   const supabase = getClient()
 
-  const [guardiansResult, enrollmentsResult, billingResult, auditResult] = await Promise.all([
+  const [guardiansResult, enrollmentsResult, billingResult, attendanceResult, auditResult] = await Promise.all([
     withTimeout(
       supabase
         .from('student_guardians')
@@ -126,6 +127,18 @@ export async function getStudent360Data(studentId: string): Promise<Student360Da
     ),
     withTimeout(
       supabase
+        .from('attendance_records')
+        .select(
+          'id, session_id, student_id, status, notes, recorded_by, created_at, updated_at, session:class_sessions(id, class_id, session_date, start_time, end_time, status, notes, created_at, updated_at, class:classes(id, name, description, capacity, status, created_at, updated_at))',
+        )
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false })
+        .limit(100),
+      STUDENT_360_TIMEOUT_MS,
+      createTimeoutError,
+    ),
+    withTimeout(
+      supabase
         .from('audit_events')
         .select('id, actor_user_id, entity_type, entity_id, action, metadata, created_at')
         .eq('entity_type', 'student')
@@ -138,7 +151,7 @@ export async function getStudent360Data(studentId: string): Promise<Student360Da
   ])
 
   const firstError =
-    guardiansResult.error ?? enrollmentsResult.error ?? billingResult.error ?? auditResult.error
+    guardiansResult.error ?? enrollmentsResult.error ?? billingResult.error ?? attendanceResult.error ?? auditResult.error
 
   if (firstError) {
     throw mapStudentsError(firstError)
@@ -146,6 +159,7 @@ export async function getStudent360Data(studentId: string): Promise<Student360Da
 
   return {
     auditEvents: auditResult.data ?? [],
+    attendanceRecords: (attendanceResult.data ?? []) as AttendanceRecordWithSession[],
     billingPlans: (billingResult.data ?? []) as BillingPlanWithGuardian[],
     enrollments: (enrollmentsResult.data ?? []) as EnrollmentWithClass[],
     guardians: (guardiansResult.data ?? []) as StudentGuardianLink[],
