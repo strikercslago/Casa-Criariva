@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-The current real domain modules are Students, Student 360, Guardians, Classes and Agenda/Attendance. Billing, finance, events, materials, ideas and reports remain intentionally outside this phase.
+The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance and Billing/Payments. General finance, expenses, events, materials, ideas and reports remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -140,3 +140,26 @@ Phase 6 turns `/agenda` into the daily operational attendance surface under `src
 The route intentionally avoids a heavy calendar widget. It loads a bounded date window through `list_agenda_sessions`, which materializes only the needed recurring sessions and returns list cards with expected-student and attendance totals.
 
 Attendance is edited in a drawer and saved by one RPC call. Student-affecting attendance mutations invalidate the affected Student 360 relation cache so the `Frequencia` tab stays current.
+
+## Billing And Payments Pattern
+
+Phase 7 turns `/mensalidades` into the billing surface under `src/features/billing`:
+
+- `api`: Supabase RPC operations and payload mapping.
+- `hooks`: TanStack Query keys, list/detail hooks and scoped invalidation.
+- `types`: generated table/RPC types plus parsed payment history shapes.
+- `utils`: month handling, money/status labels and error mapping.
+- `components`: filters, responsive fee list, payment drawer and monthly fee detail drawer.
+- `pages`: month navigation, summary cards, server-side filters and pagination.
+
+The architecture separates plan, charge, payment and allocation:
+
+`student_billing_plans -> monthly_fees <- payment_allocations -> payments`
+
+`student_billing_plans` remains the configuration source. `monthly_fees` stores snapshots of base amount, discount, final amount and due date for one reference month, so changing a plan later does not rewrite history. `payments` records received money and is reversed instead of deleted. `payment_allocations` links money to charges and stays as historical evidence even when the payment is reversed.
+
+Billing status is derived, not stored as a mutable status column. The UI receives aggregated rows from `list_monthly_fees`, including amount paid, balance, computed status, financial guardian and overdue days. Partial overdue charges are shown as `Vencida - Parcial`, with overdue as the primary risk signal.
+
+Payments are registered through one RPC. The database locks the target monthly fee, recalculates balance and rejects overpayment, including concurrent overpayment attempts. The frontend does not use optimistic updates for money; it waits for the RPC and then invalidates the fee detail, month list, month summary and affected Student 360 snapshot.
+
+Payments are the future source of truth for tuition revenue. The later general finance phase must reuse or integrate this source instead of duplicating each payment as a disconnected revenue row.

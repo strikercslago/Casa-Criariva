@@ -278,3 +278,61 @@ Indexes:
 | `class_sessions` | `class_sessions_class_date_idx` | Session lookup by class/date and future class history. |
 | `attendance_records` | `attendance_records_session_student_uidx` | Unique attendance per student/session and session detail loading. |
 | `attendance_records` | `attendance_records_student_session_idx` | Student 360 attendance history by student. |
+
+## Billing And Payments Foundation
+
+Migrations:
+
+- `20260811170000_billing_payments_foundation.sql`
+- `20260811171500_fix_billing_read_rpc_security.sql`
+
+Created:
+
+- Enum `public.monthly_fee_lifecycle_status`: `active`, `cancelled`.
+- Enum `public.payment_method`: `pix`, `cash`, `card`, `bank_transfer`, `other`.
+- Enum `public.payment_status`: `received`, `reversed`.
+- Table `public.monthly_fees`.
+- Table `public.payments`.
+- Table `public.payment_allocations`.
+
+### Financial Tables
+
+| Table | Purpose |
+| --- | --- |
+| `monthly_fees` | One student's charge for one reference month. Stores snapshot amounts and due date. |
+| `payments` | Money effectively received. Rows are reversed instead of deleted. |
+| `payment_allocations` | Amount from a payment allocated to a monthly fee. Reversed payments stop counting but allocations remain. |
+
+`reference_month` is a `date` constrained to the first day of the month. `due_date` is a real `date` inside the same month. `monthly_fee_due_date(reference_month, due_day)` clamps invalid days such as February 31 to the month end.
+
+`final_amount` is generated from `base_amount - discount_amount`. Amount checks require nonnegative base/discount and `discount_amount <= base_amount`.
+
+### Billing Functions
+
+- `normalize_reference_month(date)`: converts any date to the first day of its month.
+- `monthly_fee_due_date(date, smallint)`: calculates the real due date for a due day.
+- `ensure_monthly_fees(date)`: idempotently generates active monthly fee snapshots from active billing plans.
+- `monthly_fee_financial_rows(date, uuid)`: private projection used by billing read RPCs.
+- `list_monthly_fees(date, text, text, integer, integer)`: paged list with student, guardian, amount paid, balance and derived status.
+- `get_billing_month_summary(date)`: monthly expected, received, pending and overdue totals.
+- `get_monthly_fee_detail(uuid)`: one charge with complete payment history, including reversed payments.
+- `register_payment(jsonb)`: creates `payment` and `payment_allocation` atomically after locking the fee and recalculating balance.
+- `reverse_payment(jsonb)`: marks a payment as reversed with reason, without deleting allocations.
+- `cancel_monthly_fee(jsonb)`: cancels an unpaid charge with required reason.
+- `update_monthly_fee_amount(jsonb)`: adjusts base/discount with required reason and blocks values below received payments.
+- `get_student_billing_snapshot(uuid, date, integer, integer)`: compact Student 360 financial snapshot and paged recent fees.
+
+### Billing Indexes
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `monthly_fees` | `monthly_fees_active_student_month_uidx` | Prevent duplicate active charge for the same student/reference month. |
+| `monthly_fees` | `monthly_fees_reference_month_idx` | Month list ordered by due date. |
+| `monthly_fees` | `monthly_fees_student_reference_idx` | Student 360 recent billing history. |
+| `monthly_fees` | `monthly_fees_due_date_idx` | Overdue lookups for active charges. |
+| `monthly_fees` | `monthly_fees_billing_plan_idx` | Trace generated charges back to billing plans. |
+| `payments` | `payments_paid_at_idx` | Payment history ordered by paid date. |
+| `payments` | `payments_status_idx` | Excluding reversed payments from received totals. |
+| `payments` | `payments_payer_guardian_idx` | Future payer/family payment lookups. |
+| `payment_allocations` | `payment_allocations_monthly_fee_idx` | Balance and payment history for one charge. |
+| `payment_allocations` | `payment_allocations_payment_idx` | Reversal impact and future multi-allocation payments. |

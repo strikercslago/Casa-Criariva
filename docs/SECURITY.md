@@ -128,3 +128,15 @@ Frontend safety:
 - Agenda/attendance RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
 - `save_session_attendance` records one consolidated audit event instead of one audit row per student.
 - Owner simulation validated idempotent session materialization, expected students by enrollment dates, batch attendance save, cancelled-session rejection and rollback with `0` residual rows.
+
+## Billing And Payments Security
+
+- `monthly_fees`, `payments` and `payment_allocations` have RLS enabled.
+- Anonymous REST access to all three tables is blocked with `401` / PostgreSQL `42501`.
+- Anonymous RPC access to `list_monthly_fees`, `ensure_monthly_fees` and `register_payment` is blocked with `401` / PostgreSQL `42501`.
+- Billing write RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
+- Read RPCs are `SECURITY DEFINER` only so the internal projection `monthly_fee_financial_rows` can remain private; they still validate owner access.
+- `register_payment` locks the monthly fee row and recalculates received amount in the database before accepting money, preventing stale frontend balances and concurrent overpayment.
+- Payments are not deleted by the application. Corrections use `reverse_payment` with a required reason, preserving `payments` and `payment_allocations`.
+- `cancel_monthly_fee` refuses cancellation while received payments remain active.
+- Owner rollback simulation validated idempotent generation, due-date clamping, snapshot amounts, partial payment, full payment, overpayment rejection, reversal, preserved payment history, cancel-with-active-payment rejection and rollback with `0` residual rows.

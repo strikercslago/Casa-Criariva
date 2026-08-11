@@ -87,6 +87,14 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-11 | Agenda route chunk | 15.21 KB / 4.91 KB gzip | Lazy route with day/week list and attendance drawer |
 | 2026-08-11 | Unit/component tests after Agenda/Attendance | 26.40 s | 29 files, 51 tests |
 | 2026-08-11 | E2E after Agenda/Attendance | 10.8 s | 5 Chromium tests: auth, agenda, students, guardians and classes |
+| 2026-08-11 | Baseline before Billing/Payments | 8.19 s | `/mensalidades` placeholder chunk was 0.29 KB / 0.23 KB gzip |
+| 2026-08-11 | Production build after Billing/Payments | 7.92 s | Vite internal build after final implementation |
+| 2026-08-11 | Initial JS bundle after Billing/Payments | 479.53 KB / 143.67 KB gzip | Main shell increased by about 0.08 KB gzip from Agenda/Attendance |
+| 2026-08-11 | Billing route chunk | 19.35 KB / 5.17 KB gzip | Lazy route with monthly list, summary, filters, detail and payment flow |
+| 2026-08-11 | Payment drawer shared chunk | 12.75 KB / 4.43 KB gzip | Reused by `/mensalidades` and Student 360 Financeiro |
+| 2026-08-11 | Unit/component tests after Billing/Payments | 18.09 s | 30 files, 53 tests |
+| 2026-08-11 | Billing E2E isolated | 12.6 s | 1 Chromium test: generation, partial/full payment, reversal and Student 360 Financeiro |
+| 2026-08-11 | E2E after Billing/Payments | 17.2 s | 6 Chromium tests: auth, students, guardians, classes, agenda and billing |
 
 ## Startup Notes
 
@@ -205,3 +213,21 @@ Target for opening `/agenda` after a valid session is already available:
 `list_agenda_sessions` materializes needed sessions and returns the agenda cards in one request. Opening a session performs one `get_session_attendance` RPC. Saving attendance performs one `save_session_attendance` RPC regardless of student count.
 
 Student 360 attendance history adds one detail-only `attendance_records` request after the student profile opens; it is not loaded by the students list.
+
+## Billing Request Budget
+
+Target for opening `/mensalidades` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1`: 0 direct list requests.
+- `/rpc/list_monthly_fees`: 1 cold list request for the selected month/page/filter.
+- `/rpc/get_billing_month_summary`: 1 cold summary request for the selected month.
+
+Changing month or filters invalidates only the billing list key for those parameters. Registering a payment uses one `register_payment` RPC, then invalidates:
+
+- the opened monthly fee detail;
+- monthly fee lists;
+- the selected month summary;
+- the affected Student 360 billing snapshot.
+
+Opening a monthly fee performs one `get_monthly_fee_detail` RPC with payment history in the same response. Student 360 Financeiro performs one `get_student_billing_snapshot` RPC only when the Financeiro tab is opened; it does not load years of payment history during the initial student profile load.

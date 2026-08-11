@@ -23,6 +23,7 @@ The detail drawer renders `Student360Profile` with:
 - `Visao geral`
 - `Responsaveis`
 - `Matriculas`
+- `Frequencia`
 - `Financeiro`
 - `Historico`
 
@@ -72,3 +73,18 @@ Student history labels include class enrollment events created by Phase 5:
 Phase 6 adds a `Frequencia` tab to Student 360. It reads `attendance_records` joined to `class_sessions` and `classes`, showing the student's attendance history and presence rate.
 
 Attendance changes from `/agenda` invalidate the affected Student 360 relation cache, so the student profile reflects saved attendance without a browser reload.
+
+## Billing Consistency
+
+Phase 7 expands the `Financeiro` tab. The initial Student 360 relation load still includes billing plans for the overview, but generated monthly fees and payment history are loaded through `get_student_billing_snapshot` only when the Financeiro tab is opened.
+
+The tab shows:
+
+- active billing plan summary;
+- current-month monthly fee status when generated;
+- paid amount and remaining balance;
+- latest generated monthly fees, paged;
+- `Ver todas` navigation to `/mensalidades`;
+- `Registrar pagamento` for the current fee when it has balance.
+
+Payment changes from `/mensalidades` invalidate the affected Student 360 billing snapshot and relation cache, so the Financeiro tab reflects confirmed database state without a browser reload.
