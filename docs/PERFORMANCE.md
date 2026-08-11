@@ -108,6 +108,13 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-11 | Events route chunk | 42.09 KB / 10.77 KB gzip | Lazy route with event list, sessions, registrations, drawers and payment flow |
 | 2026-08-11 | Unit/component tests after Events | 16.29 s | 32 files, 57 tests |
 | 2026-08-11 | Events E2E isolated | 20.2 s | 1 Chromium test: event creation, student registration, waitlist and partial/full receipt |
+| 2026-08-11 | Baseline before Materials | 10.17 s | `/materiais` placeholder chunk was 0.28 KB / 0.23 KB gzip |
+| 2026-08-11 | Production build after Materials | 17.12 s | Vite internal build after final implementation |
+| 2026-08-11 | Initial JS bundle after Materials | 479.97 KB / 143.91 KB gzip | Main shell increased by about 0.05 KB gzip from Events |
+| 2026-08-11 | Materials route chunk | 37.75 KB / 9.72 KB gzip | Lazy route with stock list, movements, purchases, suppliers and drawers |
+| 2026-08-11 | Unit/component tests after Materials | 20.82 s | 33 files, 59 tests |
+| 2026-08-11 | Materials E2E isolated | 17.9 s | 1 Chromium test: materials, movements, purchase receiving and finance cash-flow integration |
+| 2026-08-11 | E2E after Materials | 24.6 s | 9 Chromium tests: auth, students, guardians, classes, agenda, billing, finance, events and materials |
 
 ## Startup Notes
 
@@ -273,3 +280,19 @@ Target for opening `/eventos` after a valid session is already available:
 - Selected event detail: one `events` row request, one `event_sessions` request, one `get_event_finance_summary` RPC and one `list_event_registrations` RPC.
 
 Creating an event uses one `create_event` RPC. Creating a registration uses one `create_event_registration` RPC. Confirm, cancel and receive each use one RPC and invalidate event, registration, event finance and general finance caches.
+
+## Materials Request Budget
+
+Target for opening `/materiais` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1/material_categories`: 1 cold metadata request.
+- `/rest/v1/cash_accounts`: 1 cold metadata request.
+- `/rpc/get_inventory_summary`: 1 cold summary request.
+- `/rpc/list_materials`: 1 cold material list request.
+- `/rpc/list_purchases`: 1 cold purchase list request.
+- `/rpc/list_suppliers`: 1 cold supplier list request.
+
+Opening a material history performs one `list_inventory_movements` RPC for that material. Creating a manual movement performs one `record_inventory_movement` RPC and invalidates material lists, movement history and the inventory summary.
+
+Creating a draft purchase performs one `create_purchase` RPC and no stock or finance refresh is needed beyond purchase/supplier lists. Receiving a purchase performs one `receive_purchase` RPC and invalidates inventory, purchase and finance query keys.

@@ -164,3 +164,15 @@ Frontend safety:
 - External participants require a linked or newly created guardian in `create_event_registration`.
 - Paid registration cancellation is blocked while active finance settlements exist; received money is preserved in `financial_settlements`.
 - Owner rollback simulation validated capacity rejection, waitlist, linked finance receivable, partial/full receipt, event cash-flow source, paid-cancel rejection, free registration without receivable and rollback with `0` residual event rows.
+
+## Materials And Inventory Security
+
+- `material_categories`, `materials`, `inventory_movements`, `suppliers`, `purchases` and `purchase_items` have RLS enabled.
+- Anonymous REST access to all inventory tables is blocked by owner-only policies.
+- Inventory RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
+- Stock is not editable directly. The database derives stock from immutable `inventory_movements`.
+- `record_inventory_movement` locks the material row, recalculates stock in the database and rejects any movement that would make stock negative.
+- Purchase receiving locks the purchase row and only accepts `draft` purchases. It creates purchase movements and one linked finance expense in the same transaction.
+- Received purchases are not silently cancelled. Draft cancellation requires a reason and preserves the purchase record.
+- Historical inventory movements are not deleted by the application. Corrections must be compensating movements with notes.
+- Owner rollback simulation validated initial stock, consumption, loss, adjustment, negative-stock rejection, draft purchase isolation, received purchase stock/finance integration, duplicate-receive rejection, cash purchase settlement, material cash-flow source and rollback with `0` residual inventory rows.

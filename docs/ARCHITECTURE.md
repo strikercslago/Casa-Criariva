@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance, Billing/Payments, Finance and Events. Materials, ideas and reports remain intentionally outside this phase.
+The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance, Billing/Payments, Finance, Events and Materials/Inventory. Ideas and reports remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -199,3 +199,25 @@ Phase 9 turns `/eventos` into the events, workshops and holiday colonies surface
 Events do not create a new money ledger. Paid confirmed registrations create one linked income `financial_entries` receivable. Receipts use `financial_settlements` through the event RPC wrapper, so finance cash flow counts the money once as `event_registration`.
 
 The database owns capacity decisions. The frontend displays availability and sends intent; create/confirm RPCs lock the event/session rows and reject over-capacity confirmations, including concurrent attempts.
+
+## Materials And Inventory Pattern
+
+Phase 10 turns `/materiais` into the materials, stock, purchases and suppliers surface under `src/features/materials`:
+
+- `api`: Supabase RPC/direct table operations and payload mapping.
+- `hooks`: TanStack Query keys, list/detail hooks and scoped invalidation.
+- `types`: generated table/RPC types plus filter/input shapes.
+- `utils`: labels, quantities, money and inventory error mapping.
+- `pages`: stock, purchase and supplier orchestration for `/materiais`.
+
+The architecture keeps stock as a derived value:
+
+`materials -> inventory_movements`
+
+There is no editable `current_stock` column. Lists and summaries read movement totals through database projections. Corrections are compensating movements, not history deletion.
+
+Purchases are separated from cash:
+
+`purchases -> purchase_items -> inventory_movements`
+
+Draft purchases do not affect stock or finance. Receiving a purchase is an atomic database operation that locks the purchase, creates purchase movements and creates exactly one linked expense `financial_entries` row. Optional immediate payment settles that linked entry through the existing finance settlement model.

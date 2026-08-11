@@ -462,3 +462,75 @@ Created:
 | `event_registrations` | `event_registrations_guest_name_trgm_idx` | External participant search. |
 | `event_registrations` | `event_registrations_financial_entry_idx` | Finance settlement joins and traceability. |
 | `event_registration_sessions` | `event_registration_sessions_session_idx` | Session-specific occupancy checks. |
+
+## Materials And Inventory Foundation
+
+Migrations:
+
+- `20260811220000_inventory_foundation.sql`
+- `20260811221000_fix_inventory_receive_purchase_ambiguity.sql`
+- `20260811222000_fix_inventory_summary_counts.sql`
+
+Created:
+
+- Enum `public.material_unit`: `unit`, `package`, `box`, `sheet`, `roll`, `liter`, `milliliter`, `kilogram`, `gram`, `meter`, `bottle`, `other`.
+- Enum `public.inventory_movement_type`: `initial_stock`, `purchase`, `consumption`, `loss`, `adjustment_in`, `adjustment_out`, `return`.
+- Enum `public.purchase_status`: `draft`, `received`, `cancelled`.
+- Table `public.material_categories`.
+- Table `public.materials`.
+- Table `public.inventory_movements`.
+- Table `public.suppliers`.
+- Table `public.purchases`.
+- Table `public.purchase_items`.
+
+### Inventory Tables
+
+| Table | Purpose |
+| --- | --- |
+| `material_categories` | Active/inactive category names for materials. |
+| `materials` | Material catalog, unit, minimum stock, notes and archive state. |
+| `inventory_movements` | Immutable stock ledger used to derive current stock. |
+| `suppliers` | Simple supplier contact records. |
+| `purchases` | Purchase lifecycle header: draft, received or cancelled. |
+| `purchase_items` | Materials, quantities and unit costs for one purchase. |
+
+`materials` has no editable `current_stock`. Stock is calculated from signed `inventory_movements`: `initial_stock`, `purchase`, `adjustment_in` and `return` add stock; `consumption`, `loss` and `adjustment_out` remove stock.
+
+### Inventory Functions
+
+- `inventory_movement_signed_quantity(inventory_movement_type, numeric)`: returns the signed stock impact.
+- `get_material_stock(uuid)`: calculates stock for one material.
+- `material_stock_rows()`: private stock projection used by list/summary RPCs.
+- `list_materials(jsonb)`: paged material list with current stock, status and last purchase cost.
+- `get_inventory_summary()`: material, low-stock, out-of-stock and recent-purchase totals.
+- `list_inventory_movements(jsonb)`: paged movement history for one material.
+- `record_inventory_movement(jsonb)`: creates manual stock movements and blocks negative stock.
+- `create_material(jsonb)`: creates a material and optional `initial_stock` movement.
+- `update_material(jsonb)`: updates catalog fields without touching stock.
+- `archive_material(jsonb)`: archives a material while preserving history.
+- `create_material_category(jsonb)`: creates a category.
+- `list_suppliers(jsonb)`: paged supplier list.
+- `upsert_supplier(jsonb)`: creates or updates one supplier.
+- `create_purchase(jsonb)`: creates a draft purchase and items without stock/finance effects.
+- `receive_purchase(jsonb)`: receives a draft purchase atomically, creates purchase movements and one linked finance expense.
+- `cancel_purchase(jsonb)`: cancels only draft purchases with a reason.
+- `list_purchases(jsonb)`: paged purchase list with total, paid amount and derived finance status.
+- `get_purchase_detail(uuid)`: purchase detail with item lines.
+
+### Inventory Indexes
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `material_categories` | `material_categories_name_uidx` | Unique category names. |
+| `materials` | `materials_category_name_idx` | Material list filtered by category and ordered by name. |
+| `materials` | `materials_active_name_idx` | Default active material list. |
+| `materials` | `materials_name_trgm_idx` | Material search by name. |
+| `inventory_movements` | `inventory_movements_material_occurred_idx` | Movement history and stock recalculation by material. |
+| `inventory_movements` | `inventory_movements_reference_idx` | Trace movements created by purchases. |
+| `suppliers` | `suppliers_active_name_idx` | Default active supplier list. |
+| `suppliers` | `suppliers_name_trgm_idx` | Supplier search by name. |
+| `purchases` | `purchases_status_date_idx` | Purchase list filtered by status and ordered by date. |
+| `purchases` | `purchases_supplier_idx` | Supplier purchase history and list filters. |
+| `purchases` | `purchases_financial_entry_idx` | Finance traceability. |
+| `purchase_items` | `purchase_items_purchase_idx` | Purchase detail item loading. |
+| `purchase_items` | `purchase_items_material_idx` | Material purchase history and last-cost lookup. |

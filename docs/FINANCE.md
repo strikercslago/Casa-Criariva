@@ -24,6 +24,7 @@ It unions:
 - received `payments` as `tuition_payment` income rows;
 - active `financial_settlements` for active manual entries.
 - active `financial_settlements` for event registrations as `event_registration` income rows.
+- active `financial_settlements` for material purchases as `material_purchase` expense rows.
 
 The final cash total therefore counts one tuition payment amount once, even when that payment has multiple monthly fee allocations.
 
@@ -79,7 +80,7 @@ The route query keys are:
 - `financeKeys.accounts()`;
 - `financeKeys.recurringRules()`.
 
-Billing payment mutations invalidate `financeKeys.all` so tuition cash flow and receivables stay current after payment registration, reversal or fee cancellation. Event registration mutations also invalidate finance keys when they create, cancel or settle linked receivables.
+Billing payment mutations invalidate `financeKeys.all` so tuition cash flow and receivables stay current after payment registration, reversal or fee cancellation. Event registration mutations also invalidate finance keys when they create, cancel or settle linked receivables. Material purchase receiving also invalidates finance keys when it creates or settles the linked expense.
 
 ## Events Integration
 
@@ -91,6 +92,17 @@ Events reuse finance obligations and settlements:
 - cancellation with active receipt: blocked, preserving cash evidence.
 
 Finance cash flow labels event-sourced settlements as `Evento` and uses `source_type = 'event_registration'` with `source_id = event_registrations.id`.
+
+## Materials Integration
+
+Materials reuse finance obligations and settlements:
+
+- draft purchase: no finance entry;
+- received purchase: one expense `financial_entries` row linked from `purchases.financial_entry_id`;
+- cash purchase: optional immediate `financial_settlements` row against that linked entry;
+- duplicate receiving: blocked by the inventory RPC.
+
+Finance cash flow labels material purchase settlements as `Compra de materiais` and uses `source_type = 'material_purchase'` with `source_id = purchases.id`.
 
 ## Security
 
