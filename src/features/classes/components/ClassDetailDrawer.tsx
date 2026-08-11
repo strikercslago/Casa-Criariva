@@ -23,6 +23,11 @@ import type { ClassFormValues } from '@/features/classes/schemas/classSchema'
 import type { ClassDetail, EnrollmentWithStudent } from '@/features/classes/types/classTypes'
 import { formatAvailableSpots, formatCapacity, isClassFull } from '@/features/classes/utils/classCapacity'
 import { formatClassSchedules } from '@/features/classes/utils/classSchedule'
+import { getClassStatusLabel } from '@/features/classes/utils/classStatus'
+import {
+  getEnrollmentStatusLabel,
+  getEnrollmentStatusTone,
+} from '@/features/classes/utils/enrollmentStatus'
 import { formatStudentDate, getTodayIsoDate } from '@/features/students/utils/studentDates'
 
 type ClassDetailDrawerProps = {
@@ -333,7 +338,7 @@ function ClassOverview({ activeEnrollments, classData }: { activeEnrollments: nu
       <InfoRow label="Horarios" value={formatClassSchedules(classData.class_schedules)} />
       <InfoRow label="Capacidade" value={formatCapacity({ active_enrollments: activeEnrollments, capacity: classData.capacity })} />
       <InfoRow label="Vagas" value={formatAvailableSpots(classData.capacity, activeEnrollments)} />
-      <InfoRow label="Status" value={classData.status} />
+      <InfoRow label="Status" value={getClassStatusLabel(classData.status)} />
       <div>
         <p className="font-medium text-foreground">Descricao</p>
         <p className="mt-1 leading-6 text-muted-foreground">{classData.description ?? 'Nenhuma descricao registrada.'}</p>
@@ -373,7 +378,9 @@ function ClassStudentsTab({
                 {enrollment.end_date ? ` - Encerramento: ${formatStudentDate(enrollment.end_date)}` : ''}
               </p>
             </div>
-            <Badge tone={enrollment.status === 'active' ? 'success' : 'neutral'}>{enrollment.status}</Badge>
+            <Badge tone={getEnrollmentStatusTone(enrollment.status)}>
+              {getEnrollmentStatusLabel(enrollment.status)}
+            </Badge>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button onClick={() => onOpenStudent(enrollment.student_id)} size="sm" variant="secondary">

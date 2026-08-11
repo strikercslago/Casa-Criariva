@@ -31,5 +31,5 @@ export function mapAgendaError(error: ErrorLike) {
     return new AppError('network', 'Nao foi possivel conectar ao Supabase.', error.message)
   }
 
-  return new AppError('unknown', 'Nao foi possivel concluir a operacao.', error.message)
+  return new AppError('unknown', 'Nao foi possivel atualizar a agenda ou frequencia.', error.message)
 }

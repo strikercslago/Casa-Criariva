@@ -1,5 +1,7 @@
-import type { ClassScheduleRow } from '@/features/students/types/student360Types'
+import type { ClassScheduleRow, StudentBillingPlanRow } from '@/features/students/types/student360Types'
 import { moneyFormatter } from '@/app/config/localization'
+
+type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger'
 
 const weekdayLabels: Record<number, string> = {
   1: 'Segunda',
@@ -19,6 +21,18 @@ const shortWeekdayLabels: Record<number, string> = {
   5: 'Sex',
   6: 'Sab',
   7: 'Dom',
+}
+
+const billingPlanStatusLabels: Record<StudentBillingPlanRow['status'], string> = {
+  active: 'Ativo',
+  ended: 'Encerrado',
+  paused: 'Pausado',
+}
+
+const billingPlanStatusTones: Record<StudentBillingPlanRow['status'], BadgeTone> = {
+  active: 'success',
+  ended: 'neutral',
+  paused: 'warning',
 }
 
 export function getWeekdayLabel(weekday: number) {
@@ -85,4 +99,12 @@ export function normalizePhoneForWhatsApp(phone: string | null) {
   }
 
   return digits.startsWith('55') ? digits : `55${digits}`
+}
+
+export function getBillingPlanStatusLabel(status: StudentBillingPlanRow['status']) {
+  return billingPlanStatusLabels[status]
+}
+
+export function getBillingPlanStatusTone(status: StudentBillingPlanRow['status']) {
+  return billingPlanStatusTones[status]
 }

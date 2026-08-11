@@ -29,6 +29,8 @@ import {
   calculateAge,
   formatMoney,
   formatSchedules,
+  getBillingPlanStatusLabel,
+  getBillingPlanStatusTone,
   normalizePhoneForWhatsApp,
 } from '@/features/students/utils/student360Format'
 import { attendanceStatusLabels } from '@/features/agenda/utils/agendaFormat'
@@ -37,6 +39,10 @@ import { PaymentDrawer } from '@/features/billing/components/PaymentDrawer'
 import { useStudentBillingSnapshot } from '@/features/billing/hooks/useBilling'
 import type { MonthlyFeeListRow } from '@/features/billing/types/billingTypes'
 import { getCurrentReferenceMonth } from '@/features/billing/utils/billingDates'
+import {
+  getEnrollmentStatusLabel,
+  getEnrollmentStatusTone,
+} from '@/features/classes/utils/enrollmentStatus'
 import {
   formatMoney as formatBillingMoney,
   getMonthlyFeeStatusLabel,
@@ -342,7 +348,9 @@ function EnrollmentsTab({ enrollments }: { enrollments: EnrollmentWithClass[] })
                 {enrollment.class ? formatSchedules(enrollment.class.class_schedules) : 'Horario nao informado'}
               </p>
             </div>
-            <Badge tone={enrollment.status === 'active' ? 'success' : 'neutral'}>{enrollment.status}</Badge>
+            <Badge tone={getEnrollmentStatusTone(enrollment.status)}>
+              {getEnrollmentStatusLabel(enrollment.status)}
+            </Badge>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">Inicio: {formatStudentDate(enrollment.start_date)}</p>
         </article>
@@ -404,7 +412,9 @@ function BillingTab({
                 <h3 className="font-semibold text-foreground">{index === 0 ? 'Plano financeiro atual' : 'Plano financeiro anterior'}</h3>
                 <p className="mt-1 text-2xl font-semibold text-primary">{formatMoney(netAmount)}</p>
               </div>
-              <Badge tone={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
+              <Badge tone={getBillingPlanStatusTone(plan.status)}>
+                {getBillingPlanStatusLabel(plan.status)}
+              </Badge>
             </div>
             <dl className="mt-4 grid gap-2 text-sm">
               <InfoRow label="Valor base" value={formatMoney(plan.base_amount)} />

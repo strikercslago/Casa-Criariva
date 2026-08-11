@@ -35,5 +35,5 @@ export function mapStudentsError(error: ErrorLike) {
     return new AppError('network', 'Nao foi possivel conectar ao Supabase.', error.message)
   }
 
-  return new AppError('unknown', 'Nao foi possivel concluir a operacao.', error.message)
+  return new AppError('unknown', 'Nao foi possivel atualizar os dados do aluno.', error.message)
 }
