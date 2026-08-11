@@ -174,6 +174,11 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
       return
     }
 
+    if (url.pathname.endsWith('/attendance_records')) {
+      await route.fulfill({ contentType: 'application/json', json: [], status: 200 })
+      return
+    }
+
     if (url.pathname.endsWith('/audit_events')) {
       await route.fulfill({
         contentType: 'application/json',

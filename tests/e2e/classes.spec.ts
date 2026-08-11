@@ -462,7 +462,11 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
       return
     }
 
-    if (url.pathname.endsWith('/student_guardians') || url.pathname.endsWith('/student_billing_plans')) {
+    if (
+      url.pathname.endsWith('/student_guardians') ||
+      url.pathname.endsWith('/student_billing_plans') ||
+      url.pathname.endsWith('/attendance_records')
+    ) {
       await route.fulfill({ contentType: 'application/json', json: [], status: 200 })
       return
     }

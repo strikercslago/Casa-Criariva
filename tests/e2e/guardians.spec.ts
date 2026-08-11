@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+﻿import { expect, test } from '@playwright/test'
 
 type Student = {
   archived_at: string | null
@@ -380,7 +380,11 @@ test('manages guardians and keeps Student 360 consistent with mocked Supabase re
       return
     }
 
-    if (url.pathname.endsWith('/enrollments') || url.pathname.endsWith('/student_billing_plans')) {
+    if (
+      url.pathname.endsWith('/enrollments') ||
+      url.pathname.endsWith('/student_billing_plans') ||
+      url.pathname.endsWith('/attendance_records')
+    ) {
       await route.fulfill({ contentType: 'application/json', json: [], status: 200 })
       return
     }
@@ -432,7 +436,7 @@ test('manages guardians and keeps Student 360 consistent with mocked Supabase re
   await page.getByPlaceholder('Nome do aluno').fill('Ana')
   await page.getByRole('button', { name: /Ana Carolina/ }).click()
   await page.getByRole('button', { name: 'Salvar vinculo' }).click()
-  await expect(page.getByText('Aluno vinculado.')).toBeVisible()
+  await expect(page.getByText('Aluno vinculado.', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Alunos vinculados' }).click()
   await expect(page.getByText('Ana Carolina').first()).toBeVisible()
 
