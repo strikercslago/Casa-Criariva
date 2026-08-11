@@ -73,3 +73,29 @@ textarea:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+
+@media print {
+  body {
+    background: white;
+  }
+
+  aside,
+  header,
+  nav,
+  button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .reports-print {
+    color: #111827;
+  }
+
+  .reports-print * {
+    box-shadow: none !important;
+  }
+}
