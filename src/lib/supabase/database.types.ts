@@ -289,6 +289,170 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_fees: {
+        Row: {
+          base_amount: number
+          billing_plan_id: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          discount_amount: number
+          due_date: string
+          final_amount: number | null
+          id: string
+          lifecycle_status: Database["public"]["Enums"]["monthly_fee_lifecycle_status"]
+          notes: string | null
+          reference_month: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_amount: number
+          billing_plan_id?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          discount_amount?: number
+          due_date: string
+          final_amount?: number | null
+          id?: string
+          lifecycle_status?: Database["public"]["Enums"]["monthly_fee_lifecycle_status"]
+          notes?: string | null
+          reference_month: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_amount?: number
+          billing_plan_id?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          discount_amount?: number
+          due_date?: string
+          final_amount?: number | null
+          id?: string
+          lifecycle_status?: Database["public"]["Enums"]["monthly_fee_lifecycle_status"]
+          notes?: string | null
+          reference_month?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_fees_billing_plan_id_fkey"
+            columns: ["billing_plan_id"]
+            isOneToOne: false
+            referencedRelation: "student_billing_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_allocations: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          monthly_fee_id: string
+          payment_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          monthly_fee_id: string
+          payment_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          monthly_fee_id?: string
+          payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_allocations_monthly_fee_id_fkey"
+            columns: ["monthly_fee_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_fees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_allocations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string
+          payer_guardian_id: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          received_by: string
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at: string
+          payer_guardian_id?: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          received_by: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          payer_guardian_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          received_by?: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_payer_guardian_id_fkey"
+            columns: ["payer_guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -501,6 +665,7 @@ export type Database = {
         Args: { schedules: Json }
         Returns: undefined
       }
+      cancel_monthly_fee: { Args: { payload: Json }; Returns: string }
       complete_student_enrollment: { Args: { payload: Json }; Returns: string }
       create_class_with_schedules: { Args: { payload: Json }; Returns: string }
       create_extra_class_session: { Args: { payload: Json }; Returns: string }
@@ -513,6 +678,53 @@ export type Database = {
       ensure_class_sessions: {
         Args: { p_end_date: string; p_start_date: string }
         Returns: number
+      }
+      ensure_monthly_fees: {
+        Args: { p_reference_month: string }
+        Returns: {
+          existing_count: number
+          generated_count: number
+          reference_month: string
+        }[]
+      }
+      get_billing_month_summary: {
+        Args: { p_reference_month: string }
+        Returns: {
+          active_fees_count: number
+          cancelled_fees_count: number
+          expected_amount: number
+          overdue_amount: number
+          overdue_fees_count: number
+          paid_fees_count: number
+          partial_fees_count: number
+          pending_amount: number
+          received_amount: number
+          reference_month: string
+        }[]
+      }
+      get_monthly_fee_detail: {
+        Args: { p_monthly_fee_id: string }
+        Returns: {
+          amount_paid: number
+          balance: number
+          base_amount: number
+          computed_status: string
+          days_overdue: number
+          discount_amount: number
+          due_date: string
+          final_amount: number
+          financial_guardian_id: string
+          financial_guardian_name: string
+          financial_guardian_phone: string
+          is_partial: boolean
+          lifecycle_status: Database["public"]["Enums"]["monthly_fee_lifecycle_status"]
+          monthly_fee_id: string
+          notes: string
+          payments: Json
+          reference_month: string
+          student_id: string
+          student_name: string
+        }[]
       }
       get_session_attendance: {
         Args: { p_session_id: string }
@@ -534,6 +746,21 @@ export type Database = {
           start_time: string
           student_id: string
           student_name: string
+        }[]
+      }
+      get_student_billing_snapshot: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_reference_month?: string
+          p_student_id: string
+        }
+        Returns: {
+          billing_plan: Json
+          current_fee: Json
+          recent_fees: Json
+          student_id: string
+          total_count: number
         }[]
       }
       has_role: {
@@ -610,7 +837,83 @@ export type Database = {
           updated_at: string
         }[]
       }
+      list_monthly_fees: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_reference_month: string
+          p_search?: string
+          p_status_filter?: string
+        }
+        Returns: {
+          amount_paid: number
+          balance: number
+          base_amount: number
+          computed_status: string
+          days_overdue: number
+          discount_amount: number
+          due_date: string
+          final_amount: number
+          financial_guardian_id: string
+          financial_guardian_name: string
+          financial_guardian_phone: string
+          is_partial: boolean
+          lifecycle_status: Database["public"]["Enums"]["monthly_fee_lifecycle_status"]
+          monthly_fee_id: string
+          payment_count: number
+          reference_month: string
+          student_id: string
+          student_name: string
+          total_count: number
+        }[]
+      }
+      monthly_fee_due_date: {
+        Args: { due_day: number; reference_month: string }
+        Returns: string
+      }
+      monthly_fee_financial_rows: {
+        Args: { p_reference_month?: string; p_student_id?: string }
+        Returns: {
+          amount_paid: number
+          balance: number
+          base_amount: number
+          computed_status: string
+          days_overdue: number
+          discount_amount: number
+          due_date: string
+          final_amount: number
+          financial_guardian_id: string
+          financial_guardian_name: string
+          financial_guardian_phone: string
+          is_partial: boolean
+          lifecycle_status: Database["public"]["Enums"]["monthly_fee_lifecycle_status"]
+          monthly_fee_id: string
+          notes: string
+          payment_count: number
+          reference_month: string
+          student_id: string
+          student_name: string
+        }[]
+      }
       normalize_phone_digits: { Args: { phone_value: string }; Returns: string }
+      normalize_reference_month: { Args: { value: string }; Returns: string }
+      register_payment: {
+        Args: { payload: Json }
+        Returns: {
+          amount_paid: number
+          balance: number
+          computed_status: string
+          monthly_fee_id: string
+          payment_id: string
+        }[]
+      }
+      reverse_payment: {
+        Args: { payload: Json }
+        Returns: {
+          monthly_fee_id: string
+          payment_id: string
+        }[]
+      }
       save_session_attendance: { Args: { payload: Json }; Returns: string }
       transfer_student_class: { Args: { payload: Json }; Returns: string }
       unlink_guardian_student: { Args: { payload: Json }; Returns: undefined }
@@ -618,6 +921,7 @@ export type Database = {
       update_class_status: { Args: { payload: Json }; Returns: string }
       update_class_with_schedules: { Args: { payload: Json }; Returns: string }
       update_guardian_contact: { Args: { payload: Json }; Returns: string }
+      update_monthly_fee_amount: { Args: { payload: Json }; Returns: string }
       upsert_guardian_student_link: {
         Args: { payload: Json }
         Returns: undefined
@@ -630,6 +934,9 @@ export type Database = {
       class_session_status: "planned" | "completed" | "cancelled"
       class_status: "active" | "inactive" | "archived"
       enrollment_status: "active" | "paused" | "ended"
+      monthly_fee_lifecycle_status: "active" | "cancelled"
+      payment_method: "pix" | "cash" | "card" | "bank_transfer" | "other"
+      payment_status: "received" | "reversed"
       student_status: "active" | "inactive" | "archived"
     }
     CompositeTypes: {
@@ -764,6 +1071,9 @@ export const Constants = {
       class_session_status: ["planned", "completed", "cancelled"],
       class_status: ["active", "inactive", "archived"],
       enrollment_status: ["active", "paused", "ended"],
+      monthly_fee_lifecycle_status: ["active", "cancelled"],
+      payment_method: ["pix", "cash", "card", "bank_transfer", "other"],
+      payment_status: ["received", "reversed"],
       student_status: ["active", "inactive", "archived"],
     },
   },
