@@ -340,3 +340,18 @@ Measured on 2026-08-11 after stopping an old `vite preview` process that was loc
 - Build warning: initial chunk is above 500 kB after React Router 7 and administration UI. This is documented for follow-up manual chunking; route modules remain lazy.
 - Dashboard requests remain 3 aggregate RPCs for owner/admin. Teacher-only dashboard avoids management dashboard RPCs and shows operational shortcuts.
 - React Router was upgraded to 7.18.2; production runtime is now Node 20+.
+
+## Phase 13 Homologation Build
+
+Measured on 2026-08-11 during final homologation.
+
+- `npm run typecheck`: passed.
+- `npm run lint`: passed.
+- `npm run test`: 37 files, 67 tests, 20.62 s.
+- `npm run build`: passed; Vite internal build 11.44 s.
+- Initial app chunk: `dist/assets/index-Cz8QohWB.js` 513.46 kB, gzip 154.51 kB.
+- CSS: `dist/assets/index-6uiYOTPj.css` 25.61 kB, gzip 5.77 kB.
+- Largest lazy route chunks: Students 55.35 kB, Events 42.46 kB, Materials 38.07 kB, Finance 36.91 kB, Classes 35.81 kB.
+- `npm run e2e`: 14 Chromium tests, 29.8 s.
+- `npm run e2e:smoke`: 1 Chromium test, 6.2 s, including mobile widths 360/390/430.
+- Remaining P2: initial chunk is above Vite's 500 kB warning threshold. Keep monitoring real production Core Web Vitals before adding manual chunks.

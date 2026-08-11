@@ -30,4 +30,7 @@
 - [ ] `npm run test`
 - [ ] `npm run build`
 - [ ] `npm run e2e`
+- [ ] `npm run e2e:smoke`
 - [ ] Production smoke test completed
+- [ ] UAT checklist completed by a real operator
+- [ ] Homologation recommendation is READY in `docs/HOMOLOGATION.md`

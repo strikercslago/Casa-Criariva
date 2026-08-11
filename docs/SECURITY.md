@@ -206,3 +206,10 @@ Frontend safety:
 - Last active owner protection is enforced by database triggers on `profiles.is_active` and `user_roles`.
 - `reportError()` sanitizes obvious token/password/secret fields and does not print production stack traces to users.
 - A global Error Boundary, explicit 403, explicit 404 and offline banner are active in the SPA.
+
+## Phase 13 Homologation Security
+
+- `npm audit` and `npm audit --omit=dev` returned 0 vulnerabilities on 2026-08-11.
+- Owner, admin and teacher permission behavior is covered by E2E.
+- The daily smoke validates login and logout without storing service role credentials in the browser.
+- Production security acceptance still requires HTTPS/header verification on the real Netlify deployment because this clone has no Git remote or Netlify site binding.

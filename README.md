@@ -33,6 +33,7 @@ Inclui Auth Supabase, RLS, alunos, responsaveis, turmas, agenda, frequencia, men
 - `npm run test`
 - `npm run build`
 - `npm run e2e`
+- `npm run e2e:smoke`
 
 ## Documentation
 
@@ -42,6 +43,8 @@ Inclui Auth Supabase, RLS, alunos, responsaveis, turmas, agenda, frequencia, men
 - `docs/SECURITY.md`
 - `docs/DESIGN-SYSTEM.md`
 - `docs/DEVELOPMENT.md`
+- `docs/HOMOLOGATION.md`
+- `docs/UAT-CHECKLIST.md`
 
 ## Environment
 
@@ -84,6 +87,8 @@ Production env must include only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHA
 - `docs/PERMISSIONS.md`
 - `docs/RUNBOOK.md`
 - `docs/PRODUCTION-CHECKLIST.md`
+- `docs/HOMOLOGATION.md`
+- `docs/UAT-CHECKLIST.md`
 - `docs/BACKUP-RECOVERY.md`
 - `docs/DISASTER-RECOVERY.md`
 - `docs/OBSERVABILITY.md`

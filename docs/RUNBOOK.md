@@ -26,6 +26,16 @@ Check browser console in development, Supabase Auth/API logs in the dashboard an
 
 Use Node 20, `npm ci`, `npm run build`, then deploy `dist` as a Vite SPA. Netlify uses `netlify.toml`.
 
+## Daily Smoke
+
+Before opening daily operation, run:
+
+```bash
+npm run e2e:smoke
+```
+
+The smoke logs in as an owner with mocked Supabase responses, opens Inicio, Alunos, Agenda, Frequencia, Mensalidades and Financeiro, checks mobile widths 360/390/430 for the operational shell, and logs out.
+
 ## Rollback Deploy
 
 Use Netlify deploy history to restore the last good deploy. If a migration caused the issue, stop and prepare a reviewed forward-fix migration; do not reset or truncate production data.
