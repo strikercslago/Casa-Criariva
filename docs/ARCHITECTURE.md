@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance, Billing/Payments and Finance. Events, materials, ideas and reports remain intentionally outside this phase.
+The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance, Billing/Payments, Finance and Events. Materials, ideas and reports remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -184,3 +184,18 @@ Manual non-tuition income and expenses live in `financial_entries`. Effective pa
 Finance cash flow is a consolidated read model: received `payments` plus manual `financial_settlements`. `payment_allocations` are descriptive allocation evidence only and never create extra cash movements.
 
 Finance mutations invalidate all finance query keys. Billing payment, payment reversal and fee cancellation also invalidate `financeKeys.all`, keeping the general cash view synchronized with tuition changes.
+
+## Events Pattern
+
+Phase 9 turns `/eventos` into the events, workshops and holiday colonies surface under `src/features/events`:
+
+- `api`: Supabase RPC/direct table operations and payload mapping.
+- `hooks`: TanStack Query keys, list/detail hooks and scoped invalidation.
+- `types`: generated table/RPC types plus filter/input shapes.
+- `utils`: labels, formatting and event error mapping.
+- `components`: event list, event form drawer, registration drawer, registration list and payment drawer.
+- `pages`: route orchestration for `/eventos`.
+
+Events do not create a new money ledger. Paid confirmed registrations create one linked income `financial_entries` receivable. Receipts use `financial_settlements` through the event RPC wrapper, so finance cash flow counts the money once as `event_registration`.
+
+The database owns capacity decisions. The frontend displays availability and sends intent; create/confirm RPCs lock the event/session rows and reject over-capacity confirmations, including concurrent attempts.

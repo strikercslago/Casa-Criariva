@@ -102,6 +102,12 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-11 | Unit/component tests after Finance | 19.08 s | 31 files, 55 tests |
 | 2026-08-11 | Finance E2E isolated | 7.6 s | 1 Chromium test: summary, manual entry, settlement, cash flow, receivables and payables |
 | 2026-08-11 | E2E after Finance | 14.6 s | 7 Chromium tests: auth, students, guardians, classes, agenda, billing and finance |
+| 2026-08-11 | Baseline before Events | 8.79 s | `/eventos` placeholder chunk was 0.29 KB / 0.23 KB gzip |
+| 2026-08-11 | Production build after Events | 8.10 s | Vite internal build after final implementation |
+| 2026-08-11 | Initial JS bundle after Events | 479.92 KB / 143.86 KB gzip | Main shell increased by about 0.07 KB gzip from Finance |
+| 2026-08-11 | Events route chunk | 42.09 KB / 10.77 KB gzip | Lazy route with event list, sessions, registrations, drawers and payment flow |
+| 2026-08-11 | Unit/component tests after Events | 16.29 s | 32 files, 57 tests |
+| 2026-08-11 | Events E2E isolated | 20.2 s | 1 Chromium test: event creation, student registration, waitlist and partial/full receipt |
 
 ## Startup Notes
 
@@ -256,3 +262,14 @@ Target for opening `/financeiro` after a valid session is already available:
 The route keeps all finance code lazy in `FinancePage`. Summary, cash flow, entries and obligations use separate TanStack Query keys so month/filter/page changes do not require browser reloads.
 
 Manual entry creation uses one `create_financial_entry` RPC. Manual settlement uses one `settle_financial_entry` RPC. Reversal and cancellation each use one RPC. Billing payment mutations invalidate finance keys because tuition cash is read from `payments` in the finance cash-flow projection.
+
+## Events Request Budget
+
+Target for opening `/eventos` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1/cash_accounts`: 1 cold metadata request.
+- `/rpc/list_events`: 1 cold event list request.
+- Selected event detail: one `events` row request, one `event_sessions` request, one `get_event_finance_summary` RPC and one `list_event_registrations` RPC.
+
+Creating an event uses one `create_event` RPC. Creating a registration uses one `create_event_registration` RPC. Confirm, cancel and receive each use one RPC and invalidate event, registration, event finance and general finance caches.

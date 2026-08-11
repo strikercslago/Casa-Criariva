@@ -404,3 +404,61 @@ Tuition receipts remain in `payments`. Finance reads received `payments` directl
 | `financial_settlements` | `financial_settlements_settled_at_idx` | Cash-flow date windows. |
 | `financial_settlements` | `financial_settlements_cash_account_idx` | Cash account filtering. |
 | `recurring_financial_rules` | `recurring_financial_rules_active_idx` | Active monthly generation scan. |
+
+## Events Foundation
+
+Migrations:
+
+- `20260811203000_events_foundation.sql`
+- `20260811204500_events_integrity_hardening.sql`
+
+Created:
+
+- Enum `public.event_type`: `colony`, `workshop`, `special_activity`, `other`.
+- Enum `public.event_status`: `draft`, `open`, `closed`, `completed`, `cancelled`.
+- Enum `public.event_registration_status`: `pending`, `confirmed`, `waitlisted`, `cancelled`.
+- Enum `public.event_registration_type`: `full_event`, `selected_sessions`.
+- Table `public.events`.
+- Table `public.event_sessions`.
+- Table `public.event_registrations`.
+- Table `public.event_registration_sessions`.
+
+### Events Tables
+
+| Table | Purpose |
+| --- | --- |
+| `events` | Event, workshop or holiday colony configuration. |
+| `event_sessions` | Date/time occurrences belonging to an event, with optional capacity/price override. |
+| `event_registrations` | Existing-student or external-participant registration. |
+| `event_registration_sessions` | Selected sessions for registrations that are not full-event. |
+
+`event_registrations.financial_entry_id` is a unique link to the one finance receivable generated for a paid confirmed registration. Free registrations keep this field null.
+
+### Events Functions
+
+- `assert_event_capacity_available(uuid, event_registration_type, uuid[], uuid)`: locks event/session rows and validates capacity.
+- `ensure_event_registration_financial_entry(uuid)`: idempotently creates the linked finance receivable.
+- `list_events(text, text, text, integer, integer)`: paged list with sessions, capacity and finance summary.
+- `get_event_finance_summary(uuid)`: expected, received and receivable totals for one event.
+- `list_event_registrations(uuid, text, text, text, integer, integer)`: paged registrations with participant, guardian, sessions and finance state.
+- `create_event(jsonb)`: creates event and sessions atomically.
+- `update_event_status(jsonb)`: changes lifecycle status and writes audit.
+- `create_event_registration(jsonb)`: creates existing-student or external registration, optionally guardian, and linked receivable when confirmed.
+- `confirm_event_registration(jsonb)`: promotes pending/waitlisted registration after capacity check.
+- `cancel_event_registration(jsonb)`: cancels unpaid registrations and blocks registrations with active receipts.
+- `settle_event_registration(jsonb)`: delegates receipt to finance settlement.
+
+### Events Indexes
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `events` | `events_status_type_date_idx` | Event list filtered by status/type and ordered by signup window. |
+| `events` | `events_name_trgm_idx` | Event search by name. |
+| `event_sessions` | `event_sessions_event_datetime_uidx` | Session list/order and duplicate prevention per event/date/time. |
+| `event_sessions` | `event_sessions_event_date_idx` | Event detail session ordering. |
+| `event_registrations` | `event_registrations_event_status_idx` | Registration list and capacity counts by event/status. |
+| `event_registrations` | `event_registrations_student_idx` | Future Student 360 event history. |
+| `event_registrations` | `event_registrations_guardian_idx` | Guardian-linked event lookups. |
+| `event_registrations` | `event_registrations_guest_name_trgm_idx` | External participant search. |
+| `event_registrations` | `event_registrations_financial_entry_idx` | Finance settlement joins and traceability. |
+| `event_registration_sessions` | `event_registration_sessions_session_idx` | Session-specific occupancy checks. |

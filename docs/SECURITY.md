@@ -152,3 +152,15 @@ Frontend safety:
 - Manual settlements are not deleted by the application. Corrections use `reverse_financial_settlement` with a required reason.
 - Tuition payments are not duplicated into finance entries. Finance cash flow reads received `payments` once and treats `payment_allocations` only as allocation evidence.
 - Owner rollback simulation validated manual expense/income settlements, overpayment rejection, reversal, recurring generation, tuition payment counted once despite two allocations and rollback with `0` residual finance rows.
+
+## Events Security
+
+- `events`, `event_sessions`, `event_registrations` and `event_registration_sessions` have RLS enabled.
+- Anonymous REST access to all event tables is blocked with `401` / PostgreSQL `42501`.
+- Anonymous RPC access to event read/write functions is blocked with `401` / PostgreSQL `42501`.
+- Event RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
+- Event registration capacity is enforced inside database RPCs with row locks, not trusted to frontend counters.
+- Direct session-link writes are protected by `validate_event_registration_session_event`, preventing a registration from referencing a session from another event.
+- External participants require a linked or newly created guardian in `create_event_registration`.
+- Paid registration cancellation is blocked while active finance settlements exist; received money is preserved in `financial_settlements`.
+- Owner rollback simulation validated capacity rejection, waitlist, linked finance receivable, partial/full receipt, event cash-flow source, paid-cancel rejection, free registration without receivable and rollback with `0` residual event rows.

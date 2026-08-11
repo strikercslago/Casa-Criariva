@@ -23,6 +23,7 @@ It unions:
 
 - received `payments` as `tuition_payment` income rows;
 - active `financial_settlements` for active manual entries.
+- active `financial_settlements` for event registrations as `event_registration` income rows.
 
 The final cash total therefore counts one tuition payment amount once, even when that payment has multiple monthly fee allocations.
 
@@ -78,7 +79,18 @@ The route query keys are:
 - `financeKeys.accounts()`;
 - `financeKeys.recurringRules()`.
 
-Billing payment mutations invalidate `financeKeys.all` so tuition cash flow and receivables stay current after payment registration, reversal or fee cancellation.
+Billing payment mutations invalidate `financeKeys.all` so tuition cash flow and receivables stay current after payment registration, reversal or fee cancellation. Event registration mutations also invalidate finance keys when they create, cancel or settle linked receivables.
+
+## Events Integration
+
+Events reuse finance obligations and settlements:
+
+- paid confirmed registration: one income `financial_entries` row;
+- free confirmed registration: no receivable;
+- partial/full receipt: `financial_settlements` against the linked entry;
+- cancellation with active receipt: blocked, preserving cash evidence.
+
+Finance cash flow labels event-sourced settlements as `Evento` and uses `source_type = 'event_registration'` with `source_id = event_registrations.id`.
 
 ## Security
 

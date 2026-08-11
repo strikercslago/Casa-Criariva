@@ -88,3 +88,9 @@ The tab shows:
 - `Registrar pagamento` for the current fee when it has balance.
 
 Payment changes from `/mensalidades` invalidate the affected Student 360 billing snapshot and relation cache, so the Financeiro tab reflects confirmed database state without a browser reload.
+
+## Events Consistency
+
+Phase 9 stores existing-student event participation in `event_registrations.student_id`. The events module is the operational surface for now; Student 360 keeps its existing tabs unchanged in this phase.
+
+The database model is ready for a future detail-only Student 360 section that lists a student's confirmed, waitlisted and cancelled event registrations without changing the students list query.
