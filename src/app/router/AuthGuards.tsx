@@ -1,7 +1,11 @@
 import { useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { hasAnyRole } from '@/app/auth/permissions'
 import { useAuth } from '@/app/providers/AuthProvider'
 import { logAuthDiagnostic } from '@/lib/monitoring/authDiagnostics'
+import type { AppRole } from '@/lib/supabase/types'
+import { ForbiddenPage } from '@/shared/components/feedback/ForbiddenPage'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { RouteSkeleton } from '@/shared/components/feedback/RouteSkeleton'
 
@@ -63,4 +67,32 @@ export function PublicOnlyRoute() {
   }
 
   return <Outlet />
+}
+
+type RoleRouteProps = {
+  allowedRoles: AppRole[]
+  children: ReactNode
+}
+
+export function RoleRoute({ allowedRoles, children }: RoleRouteProps) {
+  const auth = useAuth()
+
+  if (auth.isAccountLoading) {
+    return <RouteSkeleton />
+  }
+
+  if (auth.accountErrorMessage) {
+    return (
+      <ErrorState
+        title="Nao foi possivel validar suas permissoes."
+        description={auth.accountErrorMessage}
+      />
+    )
+  }
+
+  if (!hasAnyRole(auth.roles, allowedRoles)) {
+    return <ForbiddenPage />
+  }
+
+  return children
 }

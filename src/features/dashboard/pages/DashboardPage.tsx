@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowRight, Boxes, CalendarDays, CreditCard, GraduationC
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '@/shared/components/navigation/PageHeader'
+import { useAuth } from '@/app/providers/AuthProvider'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
 import { Card } from '@/shared/components/ui/Card'
@@ -15,12 +16,18 @@ const today = toIsoDate(new Date())
 const referenceMonth = getCurrentReferenceMonth()
 
 export default function DashboardPage() {
-  const todayQuery = useDashboardToday(today)
-  const attentionQuery = useDashboardAttention(today)
-  const operationsQuery = useDashboardOperations(referenceMonth)
+  const auth = useAuth()
+  const isTeacherOnly = auth.roles.includes('teacher') && !auth.roles.includes('admin') && !auth.roles.includes('owner')
+  const todayQuery = useDashboardToday(today, !isTeacherOnly)
+  const attentionQuery = useDashboardAttention(today, !isTeacherOnly)
+  const operationsQuery = useDashboardOperations(referenceMonth, !isTeacherOnly)
   const todayData = todayQuery.data
   const attention = attentionQuery.data ?? []
   const operations = operationsQuery.data
+
+  if (isTeacherOnly) {
+    return <TeacherDashboard />
+  }
 
   return (
     <div className="space-y-5">
@@ -184,6 +191,34 @@ export default function DashboardPage() {
           <LinkButton to="/relatorios">Abrir Relatorios</LinkButton>
         </div>
       </Card>
+    </div>
+  )
+}
+
+function TeacherDashboard() {
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        description="Visao operacional para acompanhar aulas, turmas e chamadas."
+        title="Inicio"
+      />
+      <section className="grid gap-4 md:grid-cols-3" aria-label="Atalhos operacionais">
+        <Card>
+          <SectionHeader icon={<CalendarDays className="h-5 w-5" aria-hidden />} title="Agenda" />
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">Acompanhe aulas previstas e rotina do dia.</p>
+          <LinkButton to="/agenda">Abrir Agenda</LinkButton>
+        </Card>
+        <Card>
+          <SectionHeader icon={<Users className="h-5 w-5" aria-hidden />} title="Turmas" />
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">Consulte turmas e informacoes operacionais.</p>
+          <LinkButton to="/turmas">Abrir Turmas</LinkButton>
+        </Card>
+        <Card>
+          <SectionHeader icon={<GraduationCap className="h-5 w-5" aria-hidden />} title="Frequencia" />
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">Registre presencas, faltas e justificativas.</p>
+          <LinkButton to="/frequencia">Abrir Frequencia</LinkButton>
+        </Card>
+      </section>
     </div>
   )
 }

@@ -15,27 +15,29 @@ import {
   WalletCards,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import type { PermissionModule } from '@/app/auth/permissions'
 
 export type NavigationItem = {
   label: string
   path: string
   icon: LucideIcon
+  module: PermissionModule
 }
 
 export const navigationItems: NavigationItem[] = [
-  { label: 'Inicio', path: '/', icon: Home },
-  { label: 'Agenda', path: '/agenda', icon: CalendarDays },
-  { label: 'Alunos', path: '/alunos', icon: GraduationCap },
-  { label: 'Responsaveis', path: '/responsaveis', icon: Users },
-  { label: 'Turmas', path: '/turmas', icon: Shapes },
-  { label: 'Frequencia', path: '/frequencia', icon: ClipboardCheck },
-  { label: 'Mensalidades', path: '/mensalidades', icon: CreditCard },
-  { label: 'Financeiro', path: '/financeiro', icon: WalletCards },
-  { label: 'Eventos', path: '/eventos', icon: PartyPopper },
-  { label: 'Materiais', path: '/materiais', icon: Package },
-  { label: 'Ideias', path: '/ideias', icon: Lightbulb },
-  { label: 'Relatorios', path: '/relatorios', icon: BarChart3 },
-  { label: 'Configuracoes', path: '/configuracoes', icon: Settings },
+  { label: 'Inicio', path: '/', icon: Home, module: 'dashboard' },
+  { label: 'Agenda', path: '/agenda', icon: CalendarDays, module: 'agenda' },
+  { label: 'Alunos', path: '/alunos', icon: GraduationCap, module: 'students' },
+  { label: 'Responsaveis', path: '/responsaveis', icon: Users, module: 'guardians' },
+  { label: 'Turmas', path: '/turmas', icon: Shapes, module: 'classes' },
+  { label: 'Frequencia', path: '/frequencia', icon: ClipboardCheck, module: 'attendance' },
+  { label: 'Mensalidades', path: '/mensalidades', icon: CreditCard, module: 'billing' },
+  { label: 'Financeiro', path: '/financeiro', icon: WalletCards, module: 'finance' },
+  { label: 'Eventos', path: '/eventos', icon: PartyPopper, module: 'events' },
+  { label: 'Materiais', path: '/materiais', icon: Package, module: 'materials' },
+  { label: 'Ideias', path: '/ideias', icon: Lightbulb, module: 'settings' },
+  { label: 'Relatorios', path: '/relatorios', icon: BarChart3, module: 'reports' },
+  { label: 'Configuracoes', path: '/configuracoes', icon: Settings, module: 'settings' },
 ]
 
 export const moduleGroups = [

@@ -2,11 +2,13 @@ import { Suspense, useMemo, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LogOut, Menu, Palette, Search, ShieldCheck } from 'lucide-react'
 import { routePreloaders } from '@/app/router/routePreloaders'
+import { canAccessModule } from '@/app/auth/permissions'
 import { useAuth } from '@/app/providers/AuthProvider'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
 import { IconButton } from '@/shared/components/ui/IconButton'
 import { RouteSkeleton } from '@/shared/components/feedback/RouteSkeleton'
+import { OfflineBanner } from '@/shared/components/feedback/OfflineBanner'
 import { navigationItems } from '@/shared/constants/navigation'
 import { cn } from '@/shared/utils/cn'
 
@@ -56,6 +58,7 @@ export function RootLayout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <OfflineBanner />
       <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur">
         <div className="flex h-16 items-center gap-3 px-4 lg:px-6">
           <IconButton
@@ -141,10 +144,13 @@ function SidebarContent({
   onNavigate?: () => void
   onSignOut: () => void
 }) {
+  const auth = useAuth()
+  const visibleItems = navigationItems.filter((item) => canAccessModule(auth.roles, item.module))
+
   return (
     <nav className="flex h-full flex-col gap-1 overflow-y-auto p-3" aria-label="Navegacao principal">
       <div className="flex flex-1 flex-col gap-1">
-        {navigationItems.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             className={({ isActive }) =>
               cn(
