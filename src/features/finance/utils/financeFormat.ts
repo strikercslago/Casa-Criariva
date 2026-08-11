@@ -83,6 +83,7 @@ export function getDirectionTone(direction: string): BadgeTone {
 export function getSourceLabel(sourceType: string) {
   if (sourceType === 'tuition_payment') return 'Mensalidade'
   if (sourceType === 'event_registration') return 'Evento'
+  if (sourceType === 'material_purchase') return 'Compra de materiais'
   return 'Lancamento manual'
 }
 
