@@ -59,3 +59,13 @@ Audit is consolidated at session level:
 ## Frontend
 
 `/agenda` opens on today, supports day/week navigation, lists classes by time, opens a session drawer, marks present/absent/excused, marks all present and saves in one RPC. Student 360 includes a `Frequencia` tab with history and presence rate.
+
+## Dashboard And Reports Integration
+
+Dashboard uses `list_agenda_sessions` through `get_dashboard_today` and `get_dashboard_operations`.
+
+Attendance reports follow the Phase 6 formula:
+
+- cancelled sessions are excluded;
+- pending sessions remain pending and are not converted to absences;
+- attendance rate is present divided by present + absent + excused.

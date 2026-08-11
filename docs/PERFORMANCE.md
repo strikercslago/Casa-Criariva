@@ -115,6 +115,14 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-11 | Unit/component tests after Materials | 20.82 s | 33 files, 59 tests |
 | 2026-08-11 | Materials E2E isolated | 17.9 s | 1 Chromium test: materials, movements, purchase receiving and finance cash-flow integration |
 | 2026-08-11 | E2E after Materials | 24.6 s | 9 Chromium tests: auth, students, guardians, classes, agenda, billing, finance, events and materials |
+| 2026-08-11 | Baseline before Dashboard/Reports | 27.14 s | Dashboard placeholder 3.00 KB / 0.98 KB gzip; reports placeholder 0.28 KB / 0.23 KB gzip |
+| 2026-08-11 | Production build after Dashboard/Reports | 20.68 s | Vite internal build after final implementation |
+| 2026-08-11 | Initial JS bundle after Dashboard/Reports | 480.06 KB / 143.95 KB gzip | Main shell increased by about 0.04 KB gzip from Materials |
+| 2026-08-11 | Dashboard route chunk | 9.85 KB / 2.92 KB gzip | Lazy route with today, attention and management summary blocks |
+| 2026-08-11 | Reports route chunk | 16.44 KB / 4.52 KB gzip | Lazy route with period filter, report tabs, CSV and print support |
+| 2026-08-11 | Unit/component tests after Dashboard/Reports | 33.10 s | 34 files, 62 tests |
+| 2026-08-11 | Dashboard/Reports E2E isolated | 5.2 s | 1 Chromium test: dashboard, drill-downs, reports, CSV, mobile and logout |
+| 2026-08-11 | E2E after Dashboard/Reports | 24.5 s | 10 Chromium tests: full regression suite with dashboard and reports |
 
 ## Startup Notes
 
@@ -296,3 +304,27 @@ Target for opening `/materiais` after a valid session is already available:
 Opening a material history performs one `list_inventory_movements` RPC for that material. Creating a manual movement performs one `record_inventory_movement` RPC and invalidates material lists, movement history and the inventory summary.
 
 Creating a draft purchase performs one `create_purchase` RPC and no stock or finance refresh is needed beyond purchase/supplier lists. Receiving a purchase performs one `receive_purchase` RPC and invalidates inventory, purchase and finance query keys.
+
+## Dashboard Request Budget
+
+Target for opening `/` after a valid session is already available:
+
+- `/auth/v1`: 0 redundant requests.
+- `/rpc/get_dashboard_today`: 1 cold request.
+- `/rpc/get_dashboard_attention`: 1 cold request.
+- `/rpc/get_dashboard_operations`: 1 cold request.
+
+Dashboard does not load raw student lists, monthly fee lists, event registrations or inventory movement history.
+
+## Reports Request Budget
+
+`/relatorios` remains lazy. The selected report loads only its own aggregate RPC. The monthly summary intentionally loads the domain reports it displays:
+
+- Financeiro: `get_financial_report`.
+- Alunos: `get_students_report`.
+- Turmas: `get_classes_report`.
+- Frequencia: `get_attendance_report`.
+- Eventos: `get_events_report`.
+- Estoque: `get_inventory_report`.
+
+CSV export uses the already filtered report payload in memory and does not issue another network request.

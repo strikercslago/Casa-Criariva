@@ -63,3 +63,9 @@ Query keys:
 Remote rollback smoke covered event/session creation, existing student registration, external participant with new guardian, capacity rejection, waitlist promotion path, event financial summary, partial/full receipt, cash-flow source `event_registration`, paid cancellation rejection, free registration without receivable and zero residual event rows after rollback.
 
 Anonymous REST/RPC access to event resources was blocked with `401` / PostgreSQL `42501`.
+
+## Dashboard And Reports Integration
+
+Dashboard shows only upcoming/today event information from `events` and `event_sessions`.
+
+Event reports use sessions in the selected period, registrations for those events, and linked finance settlements for received/receivable amounts. They do not duplicate finance entries or cash-flow rows.

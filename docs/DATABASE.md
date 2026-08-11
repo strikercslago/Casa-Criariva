@@ -534,3 +534,26 @@ Created:
 | `purchases` | `purchases_financial_entry_idx` | Finance traceability. |
 | `purchase_items` | `purchase_items_purchase_idx` | Purchase detail item loading. |
 | `purchase_items` | `purchase_items_material_idx` | Material purchase history and last-cost lookup. |
+
+## Dashboard And Reports Foundation
+
+Migrations:
+
+- `20260811233000_reporting_foundation.sql`
+- `20260811234000_fix_reporting_attention_date_cast.sql`
+
+Created read RPCs:
+
+- `get_dashboard_today(date)`;
+- `get_dashboard_attention(date)`;
+- `get_dashboard_operations(date)`;
+- `get_financial_report(date, date)`;
+- `get_students_report(date, date)`;
+- `get_classes_report()`;
+- `get_attendance_report(date, date)`;
+- `get_events_report(date, date)`;
+- `get_inventory_report(date, date)`.
+
+No new source tables were created. The reporting layer reads existing operational sources and projections. It does not store snapshots, duplicate ledger rows or create a second stock/attendance/finance calculation in the frontend.
+
+Reporting RPCs are modular by domain to avoid both N+1 browser requests and a single unmaintainable mega-RPC.

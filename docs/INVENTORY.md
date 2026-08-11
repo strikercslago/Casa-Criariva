@@ -114,3 +114,12 @@ Remote rollback smoke covered:
 - immediate cash purchase settlement;
 - finance cash-flow source `material_purchase`;
 - rollback with zero residual material, supplier and purchase rows.
+
+## Reports Integration
+
+Dashboard and `/relatorios` use derived inventory projections:
+
+- low stock and out of stock come from `list_materials`/`material_stock_rows`;
+- consumption in a period comes from `inventory_movements.movement_type = consumption`;
+- purchase quantity/value in a period comes from `inventory_movements.movement_type = purchase`;
+- no report invents total inventory valuation.

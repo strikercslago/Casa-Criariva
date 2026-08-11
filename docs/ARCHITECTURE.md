@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance, Billing/Payments, Finance, Events and Materials/Inventory. Ideas and reports remain intentionally outside this phase.
+The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance, Billing/Payments, Finance, Events, Materials/Inventory, Dashboard and Reports. Ideas remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -221,3 +221,24 @@ Purchases are separated from cash:
 `purchases -> purchase_items -> inventory_movements`
 
 Draft purchases do not affect stock or finance. Receiving a purchase is an atomic database operation that locks the purchase, creates purchase movements and creates exactly one linked expense `financial_entries` row. Optional immediate payment settles that linked entry through the existing finance settlement model.
+
+## Dashboard And Reports Pattern
+
+Phase 11 turns `/` and `/relatorios` into real management surfaces under `src/features/dashboard` and `src/features/reports`.
+
+Dashboard uses three independent read queries:
+
+- `get_dashboard_today(date)`;
+- `get_dashboard_attention(date)`;
+- `get_dashboard_operations(referenceMonth)`.
+
+Reports use domain-specific read RPCs rather than one mega-RPC:
+
+- `get_financial_report(start, end)`;
+- `get_students_report(start, end)`;
+- `get_classes_report()`;
+- `get_attendance_report(start, end)`;
+- `get_events_report(start, end)`;
+- `get_inventory_report(start, end)`.
+
+The reporting layer is read-only and reconciles with existing source modules. It reuses finance cash-flow rows, monthly fee financial rows, class list projections, agenda session projections and inventory stock projections.

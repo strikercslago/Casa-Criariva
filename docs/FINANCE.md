@@ -104,6 +104,12 @@ Materials reuse finance obligations and settlements:
 
 Finance cash flow labels material purchase settlements as `Compra de materiais` and uses `source_type = 'material_purchase'` with `source_id = purchases.id`.
 
+## Dashboard And Reports Integration
+
+Dashboard and financial reports reuse `finance_cash_flow_rows`, `monthly_fee_financial_rows` and `finance_entry_financial_rows`.
+
+They show `Resultado de caixa`, not formal net profit. Tuition payments, event receipts and material purchase settlements keep their existing source labels and are not duplicated into another ledger.
+
 ## Security
 
 All finance tables use owner-only RLS. Anonymous REST access is blocked. Public frontend code uses only Supabase URL and publishable key; no service role is used.

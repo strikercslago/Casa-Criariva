@@ -176,3 +176,11 @@ Frontend safety:
 - Received purchases are not silently cancelled. Draft cancellation requires a reason and preserves the purchase record.
 - Historical inventory movements are not deleted by the application. Corrections must be compensating movements with notes.
 - Owner rollback simulation validated initial stock, consumption, loss, adjustment, negative-stock rejection, draft purchase isolation, received purchase stock/finance integration, duplicate-receive rejection, cash purchase settlement, material cash-flow source and rollback with `0` residual inventory rows.
+
+## Dashboard And Reports Security
+
+- Reporting RPCs are read-only and do not bypass Auth semantics.
+- Every reporting RPC validates owner access through `auth.uid()` and `current_user_is_owner()` either directly or through reused secured projections.
+- Functions set `search_path = public`, are owned by `postgres`, revoke `public`/`anon` execute and grant execute only to `authenticated`.
+- No service role, database password or secret key is used by Dashboard or Reports frontend code.
+- Anonymous smoke without claims returned PostgreSQL `42501` for `get_dashboard_today`.
