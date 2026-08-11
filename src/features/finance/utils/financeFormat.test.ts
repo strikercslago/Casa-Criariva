@@ -20,6 +20,7 @@ describe('financeFormat', () => {
     expect(getDirectionLabel('income')).toBe('Entrada')
     expect(getDirectionTone('expense')).toBe('danger')
     expect(getSourceLabel('tuition_payment')).toBe('Mensalidade')
+    expect(getSourceLabel('event_registration')).toBe('Evento')
     expect(getSourceLabel('financial_settlement')).toBe('Lancamento manual')
   })
 })

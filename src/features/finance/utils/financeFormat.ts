@@ -81,7 +81,9 @@ export function getDirectionTone(direction: string): BadgeTone {
 }
 
 export function getSourceLabel(sourceType: string) {
-  return sourceType === 'tuition_payment' ? 'Mensalidade' : 'Lancamento manual'
+  if (sourceType === 'tuition_payment') return 'Mensalidade'
+  if (sourceType === 'event_registration') return 'Evento'
+  return 'Lancamento manual'
 }
 
 export function getOverdueLabel(daysOverdue: number) {
