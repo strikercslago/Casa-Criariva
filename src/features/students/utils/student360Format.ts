@@ -1,4 +1,5 @@
 import type { ClassScheduleRow } from '@/features/students/types/student360Types'
+import { moneyFormatter } from '@/app/config/localization'
 
 const weekdayLabels: Record<number, string> = {
   1: 'Segunda',
@@ -35,10 +36,7 @@ export function formatMoney(value: number | string | null) {
     return 'R$ 0,00'
   }
 
-  return new Intl.NumberFormat('pt-BR', {
-    currency: 'BRL',
-    style: 'currency',
-  }).format(numericValue)
+  return moneyFormatter.format(numericValue)
 }
 
 export function formatTime(value: string) {

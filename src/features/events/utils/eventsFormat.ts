@@ -1,4 +1,5 @@
 import type { Badge } from '@/shared/components/ui/Badge'
+import { createDateFormatter } from '@/app/config/localization'
 import { formatMoney, paymentMethodOptions } from '@/features/billing/utils/billingFormat'
 import type { EventRegistrationStatus, EventStatus, EventType, PaymentMethod } from '@/features/events/types/eventsTypes'
 
@@ -109,7 +110,7 @@ export function getFinanceStatusTone(status: string): BadgeTone {
 
 export function formatDate(value: string | null | undefined) {
   if (!value) return '-'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${value.slice(0, 10)}T00:00:00`))
+  return createDateFormatter({ day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${value.slice(0, 10)}T00:00:00`))
 }
 
 export function formatDateRange(first: string | null, last: string | null) {

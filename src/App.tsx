@@ -5,7 +5,7 @@ import { router } from './app/router/router'
 function App() {
   return (
     <AppProviders>
-      <RouterProvider router={router} future={{ v7_startTransition: true }} />
+      <RouterProvider router={router} />
     </AppProviders>
   )
 }

@@ -417,7 +417,7 @@ test('manages guardians and keeps Student 360 consistent with mocked Supabase re
   await page.getByRole('button', { name: 'Entrar' }).click()
 
   await expect(page.getByRole('heading', { name: 'Inicio' })).toBeVisible()
-  await page.getByRole('link', { name: 'Responsaveis' }).click()
+  await page.getByRole('link', { exact: true, name: 'Responsaveis' }).click()
   await expect(page.getByRole('heading', { name: 'Responsaveis' })).toBeVisible()
   await expect(page.getByText('Maria Existente').first()).toBeVisible()
 
@@ -452,7 +452,7 @@ test('manages guardians and keeps Student 360 consistent with mocked Supabase re
   await expect(page.getByText('Financeiro').first()).toBeVisible()
 
   await page.getByRole('dialog', { name: 'Aluno' }).getByRole('button', { name: 'Fechar' }).click()
-  await page.getByRole('link', { name: 'Responsaveis' }).click()
+  await page.getByRole('link', { exact: true, name: 'Responsaveis' }).click()
   await page.getByRole('searchbox', { name: 'Buscar responsavel' }).fill('54999999999')
   await expect(page.getByText('Maria E2E Editada').first()).toBeVisible()
   await page.getByRole('button', { name: 'Abrir Maria E2E Editada' }).first().click()
@@ -473,7 +473,7 @@ test('manages guardians and keeps Student 360 consistent with mocked Supabase re
   ).toHaveCount(0)
 
   await page.getByRole('dialog', { name: 'Aluno' }).getByRole('button', { name: 'Fechar' }).click()
-  await page.getByRole('link', { name: 'Responsaveis' }).click()
+  await page.getByRole('link', { exact: true, name: 'Responsaveis' }).click()
   await page.getByRole('button', { name: 'Abrir Maria E2E Editada' }).first().click()
   await page.getByRole('button', { name: 'Alunos vinculados' }).click()
   await page.getByRole('button', { name: 'Desvincular' }).click()

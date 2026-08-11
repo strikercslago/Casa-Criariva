@@ -1,3 +1,4 @@
+import { createDateFormatter, createNumberFormatter } from '@/app/config/localization'
 import { addMonths, getCurrentReferenceMonth, getReferenceMonthEnd } from '@/features/finance/utils/financeDates'
 import { parseIsoDate, toIsoDate } from '@/features/billing/utils/billingDates'
 import type { PeriodPreset, ReportsPeriod } from '@/features/reports/types/reportsTypes'
@@ -36,7 +37,7 @@ export function normalizePeriod(period: ReportsPeriod): ReportsPeriod {
 
 export function formatDate(value: string | null | undefined) {
   if (!value) return '-'
-  return new Intl.DateTimeFormat('pt-BR').format(parseIsoDate(value.slice(0, 10)))
+  return createDateFormatter().format(parseIsoDate(value.slice(0, 10)))
 }
 
 export function formatPeriod(period: Pick<ReportsPeriod, 'endDate' | 'startDate'>) {
@@ -45,14 +46,14 @@ export function formatPeriod(period: Pick<ReportsPeriod, 'endDate' | 'startDate'
 
 export function formatPercent(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return 'Sem base'
-  return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(Number(value))}%`
+  return `${createNumberFormatter({ maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(Number(value))}%`
 }
 
 export function getComparisonLabel(current: number, previous: number) {
   if (!Number.isFinite(previous) || previous === 0) return 'Sem base comparavel'
   const diff = ((current - previous) / Math.abs(previous)) * 100
   const sign = diff > 0 ? '+' : ''
-  return `${sign}${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(diff)}% vs periodo anterior`
+  return `${sign}${createNumberFormatter({ maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(diff)}% vs periodo anterior`
 }
 
 export function formatTime(value: string | null | undefined) {

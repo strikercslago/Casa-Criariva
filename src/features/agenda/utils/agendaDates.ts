@@ -1,10 +1,12 @@
-const longDateFormatter = new Intl.DateTimeFormat('pt-BR', {
+import { createDateFormatter } from '@/app/config/localization'
+
+const longDateFormatter = createDateFormatter({
   day: 'numeric',
   month: 'long',
   weekday: 'long',
 })
 
-const shortDateFormatter = new Intl.DateTimeFormat('pt-BR', {
+const shortDateFormatter = createDateFormatter({
   day: '2-digit',
   month: '2-digit',
   weekday: 'short',

@@ -22,10 +22,7 @@ describe('LoginPage', () => {
     signInWithPassword.mockResolvedValueOnce({ errorMessage: null })
 
     render(
-      <MemoryRouter
-        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-        initialEntries={['/login']}
-      >
+      <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<h1>Inicio</h1>} />
@@ -49,10 +46,7 @@ describe('LoginPage', () => {
     signInWithPassword.mockResolvedValueOnce({ errorMessage: 'E-mail ou senha incorretos.' })
 
     render(
-      <MemoryRouter
-        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-        initialEntries={['/login']}
-      >
+      <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
         </Routes>

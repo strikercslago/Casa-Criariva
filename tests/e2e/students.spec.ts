@@ -279,7 +279,7 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
   await page.getByRole('button', { name: 'Entrar' }).click()
 
   await expect(page.getByRole('heading', { name: 'Inicio' })).toBeVisible()
-  await page.getByRole('link', { name: 'Alunos' }).click()
+  await page.getByRole('link', { exact: true, name: 'Alunos' }).click()
   await expect(page.getByRole('heading', { name: 'Alunos' })).toBeVisible()
   await expect(page.getByText('Nenhum aluno cadastrado ainda.')).toBeVisible()
 

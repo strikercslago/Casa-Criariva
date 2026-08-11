@@ -1,14 +1,16 @@
-const monthFormatter = new Intl.DateTimeFormat('pt-BR', {
+import { createDateFormatter } from '@/app/config/localization'
+
+const monthFormatter = createDateFormatter({
   month: 'long',
   year: 'numeric',
 })
 
-const shortDateFormatter = new Intl.DateTimeFormat('pt-BR', {
+const shortDateFormatter = createDateFormatter({
   day: '2-digit',
   month: '2-digit',
 })
 
-const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+const dateTimeFormatter = createDateFormatter({
   day: '2-digit',
   hour: '2-digit',
   minute: '2-digit',

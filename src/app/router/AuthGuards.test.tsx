@@ -19,7 +19,7 @@ describe('AuthGuards', () => {
     authState.status = 'unauthenticated'
 
     render(
-      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }} initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/']}>
         <Routes>
           <Route element={<ProtectedRoute />}>
             <Route index element={<h1>Inicio</h1>} />
@@ -36,10 +36,7 @@ describe('AuthGuards', () => {
     authState.status = 'authenticated'
 
     render(
-      <MemoryRouter
-        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-        initialEntries={['/login']}
-      >
+      <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route element={<PublicOnlyRoute />}>
             <Route path="/login" element={<h1>Entrar</h1>} />

@@ -1,4 +1,5 @@
 import type { Badge } from '@/shared/components/ui/Badge'
+import { createDateFormatter, createNumberFormatter } from '@/app/config/localization'
 import { formatMoney, paymentMethodOptions } from '@/features/billing/utils/billingFormat'
 import type { InventoryMovementType, MaterialUnit, PurchaseStatus } from '@/features/materials/types/materialsTypes'
 
@@ -94,15 +95,15 @@ export function getFinanceStatusTone(status: string): BadgeTone {
 }
 
 export function formatQuantity(value: number | string | null | undefined) {
-  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3, minimumFractionDigits: 0 }).format(Number(value ?? 0))
+  return createNumberFormatter({ maximumFractionDigits: 3, minimumFractionDigits: 0 }).format(Number(value ?? 0))
 }
 
 export function formatDate(value: string | null | undefined) {
   if (!value) return '-'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${value.slice(0, 10)}T00:00:00`))
+  return createDateFormatter({ day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${value.slice(0, 10)}T00:00:00`))
 }
 
 export function formatDateTime(value: string | null | undefined) {
   if (!value) return '-'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', hour: '2-digit', minute: '2-digit', month: '2-digit' }).format(new Date(value))
+  return createDateFormatter({ day: '2-digit', hour: '2-digit', minute: '2-digit', month: '2-digit' }).format(new Date(value))
 }

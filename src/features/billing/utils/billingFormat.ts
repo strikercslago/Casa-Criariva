@@ -1,9 +1,5 @@
 import type { MonthlyFeeListRow, MonthlyFeeStatus, PaymentMethod } from '@/features/billing/types/billingTypes'
-
-const moneyFormatter = new Intl.NumberFormat('pt-BR', {
-  currency: 'BRL',
-  style: 'currency',
-})
+import { moneyFormatter } from '@/app/config/localization'
 
 export const billingStatusOptions: Array<{ label: string; value: MonthlyFeeStatus }> = [
   { label: 'Todos', value: 'all' },
