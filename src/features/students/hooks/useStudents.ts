@@ -8,6 +8,7 @@ import {
   updateStudent,
 } from '@/features/students/api/studentsApi'
 import { studentsKeys } from '@/features/students/hooks/studentsKeys'
+import { dashboardKeys, reportsKeys } from '@/features/reports/hooks/reportsKeys'
 import type { StudentFormValues } from '@/features/students/schemas/studentSchema'
 import type { StudentListFilters, StudentRow } from '@/features/students/types/studentTypes'
 
@@ -74,4 +75,6 @@ export function useRestoreStudent() {
 function updateStudentsCache(queryClient: ReturnType<typeof useQueryClient>, student: StudentRow) {
   queryClient.setQueryData(studentsKeys.detail(student.id), student)
   void queryClient.invalidateQueries({ queryKey: studentsKeys.lists() })
+  void queryClient.invalidateQueries({ queryKey: dashboardKeys.operationsRoot() })
+  void queryClient.invalidateQueries({ queryKey: reportsKeys.all })
 }

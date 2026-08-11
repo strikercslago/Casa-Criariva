@@ -32,6 +32,7 @@ import type {
   UpdateMaterialInput,
 } from '@/features/materials/types/materialsTypes'
 import { financeKeys } from '@/features/finance/hooks/financeKeys'
+import { dashboardKeys, reportsKeys } from '@/features/reports/hooks/reportsKeys'
 
 const MATERIALS_STALE_TIME_MS = 45_000
 
@@ -177,4 +178,7 @@ export function useCancelPurchase() {
 function invalidateInventory(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: materialsKeys.all })
   void queryClient.invalidateQueries({ queryKey: inventoryKeys.all })
+  void queryClient.invalidateQueries({ queryKey: dashboardKeys.operationsRoot() })
+  void queryClient.invalidateQueries({ queryKey: dashboardKeys.attentionRoot() })
+  void queryClient.invalidateQueries({ queryKey: reportsKeys.all })
 }

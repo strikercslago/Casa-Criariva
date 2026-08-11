@@ -1541,6 +1541,21 @@ export type Database = {
           start_date: string
         }[]
       }
+      get_attendance_report: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          absent_count: number
+          attendance_rate: number
+          by_class: Json
+          by_student: Json
+          end_date: string
+          excused_count: number
+          pending_sessions_count: number
+          present_count: number
+          sessions_count: number
+          start_date: string
+        }[]
+      }
       get_billing_month_summary: {
         Args: { p_reference_month: string }
         Returns: {
@@ -1556,6 +1571,81 @@ export type Database = {
           reference_month: string
         }[]
       }
+      get_classes_report: {
+        Args: never
+        Returns: {
+          active_classes_count: number
+          available_spots: number
+          class_active_enrollments: number
+          class_occupancy_rate: number
+          class_total_capacity: number
+          classes: Json
+          full_classes_count: number
+        }[]
+      }
+      get_dashboard_attention: {
+        Args: { p_day: string }
+        Returns: {
+          amount: number
+          count_value: number
+          description: string
+          href: string
+          kind: string
+          priority: number
+          title: string
+        }[]
+      }
+      get_dashboard_operations: {
+        Args: { p_reference_month: string }
+        Returns: {
+          active_classes_count: number
+          active_students_count: number
+          archived_students_count: number
+          attendance_absent_count: number
+          attendance_excused_count: number
+          attendance_pending_sessions: number
+          attendance_present_count: number
+          attendance_rate: number
+          available_spots: number
+          cash_in: number
+          cash_out: number
+          class_active_enrollments: number
+          class_occupancy_rate: number
+          class_total_capacity: number
+          full_classes_count: number
+          low_stock_count: number
+          net_students_change: number
+          new_students_count: number
+          next_event_date: string
+          next_event_id: string
+          next_event_name: string
+          out_of_stock_count: number
+          overdue_billing_amount: number
+          overdue_billing_count: number
+          payable_amount: number
+          receivable_amount: number
+          reference_month: string
+          result_amount: number
+          upcoming_events_count: number
+        }[]
+      }
+      get_dashboard_today: {
+        Args: { p_day: string }
+        Returns: {
+          day_date: string
+          events_today_count: number
+          expected_students: number
+          next_event_id: string
+          next_event_name: string
+          next_event_start: string
+          next_session_class_name: string
+          next_session_expected_students: number
+          next_session_id: string
+          next_session_start: string
+          pending_sessions_count: number
+          sessions_count: number
+        }[]
+      }
       get_event_finance_summary: {
         Args: { p_event_id: string }
         Returns: {
@@ -1569,6 +1659,22 @@ export type Database = {
           received_amount: number
         }[]
       }
+      get_events_report: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          confirmed_count: number
+          end_date: string
+          events: Json
+          events_count: number
+          expected_revenue: number
+          occupancy_rate: number
+          receivable_amount: number
+          received_amount: number
+          registrations_count: number
+          start_date: string
+          total_capacity: number
+        }[]
+      }
       get_finance_month_summary: {
         Args: { p_reference_month: string }
         Returns: {
@@ -1579,6 +1685,41 @@ export type Database = {
           receivable_amount: number
           reference_month: string
           result_amount: number
+        }[]
+      }
+      get_financial_report: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          cash_flow_rows: Json
+          cash_in: number
+          cash_out: number
+          end_date: string
+          expenses_by_category: Json
+          other_income: number
+          payable_amount: number
+          previous_cash_in: number
+          previous_cash_out: number
+          previous_result_amount: number
+          receivable_amount: number
+          result_amount: number
+          start_date: string
+          tuition_received: number
+        }[]
+      }
+      get_inventory_report: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          active_materials_count: number
+          consumption_quantity: number
+          end_date: string
+          loss_quantity: number
+          low_stock_count: number
+          low_stock_materials: Json
+          movement_rows: Json
+          out_of_stock_count: number
+          purchased_quantity: number
+          purchases_amount: number
+          start_date: string
         }[]
       }
       get_inventory_summary: {
@@ -1668,6 +1809,19 @@ export type Database = {
           recent_fees: Json
           student_id: string
           total_count: number
+        }[]
+      }
+      get_students_report: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          active_students_count: number
+          age_bands: Json
+          archived_students_count: number
+          class_distribution: Json
+          end_date: string
+          net_students_change: number
+          new_students_count: number
+          start_date: string
         }[]
       }
       has_role: {

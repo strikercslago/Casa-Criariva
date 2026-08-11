@@ -25,6 +25,7 @@ import type {
   SettleEventRegistrationInput,
 } from '@/features/events/types/eventsTypes'
 import { financeKeys } from '@/features/finance/hooks/financeKeys'
+import { dashboardKeys, reportsKeys } from '@/features/reports/hooks/reportsKeys'
 
 const EVENTS_STALE_TIME_MS = 45_000
 
@@ -176,6 +177,9 @@ function invalidateEvents(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: eventsKeys.all })
   void queryClient.invalidateQueries({ queryKey: eventRegistrationsKeys.all })
   void queryClient.invalidateQueries({ queryKey: eventFinanceKeys.all })
+  void queryClient.invalidateQueries({ queryKey: dashboardKeys.todayRoot() })
+  void queryClient.invalidateQueries({ queryKey: dashboardKeys.operationsRoot() })
+  void queryClient.invalidateQueries({ queryKey: reportsKeys.all })
 }
 
 function invalidateEvent(queryClient: ReturnType<typeof useQueryClient>, eventId: string) {

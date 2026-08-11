@@ -20,6 +20,7 @@ import {
 } from '@/features/finance/api/financeApi'
 import { financeKeys } from '@/features/finance/hooks/financeKeys'
 import type { FinanceCashFlowFilters, FinancialEntriesFilters } from '@/features/finance/types/financeTypes'
+import { dashboardKeys, reportsKeys } from '@/features/reports/hooks/reportsKeys'
 
 const FINANCE_STALE_TIME_MS = 60_000
 
@@ -178,4 +179,7 @@ export function useEnsureRecurringFinancialEntries(referenceMonth: string) {
 
 export function invalidateFinance(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: financeKeys.all })
+  void queryClient.invalidateQueries({ queryKey: dashboardKeys.operationsRoot() })
+  void queryClient.invalidateQueries({ queryKey: dashboardKeys.attentionRoot() })
+  void queryClient.invalidateQueries({ queryKey: reportsKeys.all })
 }
