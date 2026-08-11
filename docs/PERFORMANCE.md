@@ -328,3 +328,15 @@ Dashboard does not load raw student lists, monthly fee lists, event registration
 - Estoque: `get_inventory_report`.
 
 CSV export uses the already filtered report payload in memory and does not issue another network request.
+
+## Phase 12 Production Build
+
+Measured on 2026-08-11 after stopping an old `vite preview` process that was locking `dist`.
+
+- `npm run build`: passed.
+- Initial app chunk: `dist/assets/index-C6JxusZC.js` 513.45 kB, gzip 154.51 kB.
+- CSS: `dist/assets/index-6uiYOTPj.css` 25.61 kB, gzip 5.77 kB.
+- Largest lazy route chunks: Students 55.35 kB, Events 42.46 kB, Materials 38.07 kB, Finance 36.91 kB, Classes 35.76 kB.
+- Build warning: initial chunk is above 500 kB after React Router 7 and administration UI. This is documented for follow-up manual chunking; route modules remain lazy.
+- Dashboard requests remain 3 aggregate RPCs for owner/admin. Teacher-only dashboard avoids management dashboard RPCs and shows operational shortcuts.
+- React Router was upgraded to 7.18.2; production runtime is now Node 20+.

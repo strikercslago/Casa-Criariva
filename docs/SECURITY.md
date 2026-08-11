@@ -13,7 +13,7 @@ Security is enforced in the interface and in the database. Hiding a button is ne
 
 `AuthProvider` is centralized. It performs the initial session lookup once, listens for Supabase auth changes and exposes status to the app. Route-level features must not call auth repeatedly just to know the current user.
 
-Planned roles:
+Application roles:
 
 - `owner`
 - `admin`
@@ -23,13 +23,23 @@ Planned roles:
 
 Policies should be small, auditable and supported by indexes. Complex per-row policy queries should be avoided unless no safer design exists.
 
+Phase 12 adds active-user helpers:
+
+- `current_user_is_owner()`: active owner only.
+- `current_user_can_manage_operations()`: active owner/admin.
+- `current_user_can_teach()`: active owner/admin/teacher.
+- `current_user_can_manage_billing()`: active owner/admin.
+- `current_user_can_view_dashboard()`: active owner/admin.
+
+Financeiro Geral, Relatorios, users, audit and critical security settings remain owner-only.
+
 ## Logging
 
 Future monitoring must not log passwords, tokens, keys or unnecessary sensitive data.
 
 ## Current Audit Notes
 
-The local Node runtime is 18.20.8. React Router releases that fully clear the 2026 advisory currently require Node 20, so this foundation keeps React Router 6.30.4 and records the residual npm audit warning for upgrade planning.
+Phase 12 upgrades the app to React Router 7.18.2 and requires Node 20+ to clear the React Router advisories reported by `npm audit`.
 
 ## Auth Foundation
 
@@ -184,3 +194,15 @@ Frontend safety:
 - Functions set `search_path = public`, are owned by `postgres`, revoke `public`/`anon` execute and grant execute only to `authenticated`.
 - No service role, database password or secret key is used by Dashboard or Reports frontend code.
 - Anonymous smoke without claims returned PostgreSQL `42501` for `get_dashboard_today`.
+
+## Administration Hardening
+
+- `app_settings` stores organization settings, timezone `America/Sao_Paulo`, locale `pt-BR` and currency `BRL`.
+- `/configuracoes/usuarios` and `/configuracoes/auditoria` are owner-only in UI and backend.
+- `admin-users` Edge Function validates the caller JWT with `current_user_is_owner()` before listing, inviting, changing role or deactivating users.
+- Service role is used only inside the Edge Function environment, never in browser env.
+- Public signup UI remains absent.
+- `profiles` and `user_roles` now restrict auth user deletion instead of cascading administrative identity rows.
+- Last active owner protection is enforced by database triggers on `profiles.is_active` and `user_roles`.
+- `reportError()` sanitizes obvious token/password/secret fields and does not print production stack traces to users.
+- A global Error Boundary, explicit 403, explicit 404 and offline banner are active in the SPA.

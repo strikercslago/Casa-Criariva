@@ -1,0 +1,33 @@
+# Production Checklist
+
+- [ ] Local path confirmed as `C:\dev\CasaCriativa-Gestao-V2`
+- [ ] Git status reviewed
+- [ ] `npx supabase migration list` Local = Remote
+- [ ] `.env.local` not versioned
+- [ ] No service role, database password or secret token in Git
+- [ ] `npm audit` has zero unresolved production vulnerabilities or documented exceptions
+- [ ] Node 20 configured in Netlify
+- [ ] `VITE_SUPABASE_URL` configured
+- [ ] `VITE_SUPABASE_PUBLISHABLE_KEY` configured
+- [ ] No `VITE_*` service role or database secret
+- [ ] Signup public disabled in Supabase Auth
+- [ ] Owner account validated
+- [ ] Last active owner protection tested
+- [ ] Admin forbidden from Financeiro Geral and Relatorios
+- [ ] Teacher forbidden from Financeiro and `/configuracoes/usuarios`
+- [ ] RLS enabled on all private public tables
+- [ ] Anonymous REST access blocked
+- [ ] Edge Function `admin-users` deployed
+- [ ] MFA enrollment tested on a non-critical account before enforcing policy
+- [ ] Backup procedure rehearsed outside production
+- [ ] Netlify SPA fallback tested on deep links
+- [ ] HTTPS active
+- [ ] Security headers verified
+- [ ] Mobile viewports 360, 390, 430 checked
+- [ ] Keyboard flow checked
+- [ ] `npm run typecheck`
+- [ ] `npm run lint`
+- [ ] `npm run test`
+- [ ] `npm run build`
+- [ ] `npm run e2e`
+- [ ] Production smoke test completed
