@@ -76,6 +76,12 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-11 | Guardians route chunk | 33.72 KB / 8.75 KB gzip | Lazy route with list, forms, detail drawer and hooks |
 | 2026-08-11 | Unit/component tests after Guardians | 20.09 s | 20 files, 35 tests |
 | 2026-08-11 | E2E after Guardians | 5.7 s | 3 Chromium tests: auth, students and guardians integration smoke |
+| 2026-08-11 | Baseline before Classes | 8.93 s | Vite internal build; `/turmas` placeholder chunk was 0.27 KB / 0.22 KB gzip |
+| 2026-08-11 | Production build after Classes | 14.28 s | Vite internal build after module implementation |
+| 2026-08-11 | Initial JS bundle after Classes | 479.15 KB / 143.48 KB gzip | Main shell increased by about 0.05 KB gzip from Guardians |
+| 2026-08-11 | Classes route chunk | 35.04 KB / 9.62 KB gzip | Lazy route with list, forms, detail drawer, enrollment actions and hooks |
+| 2026-08-11 | Unit/component tests after Classes | 17.84 s | 26 files, 46 tests |
+| 2026-08-11 | E2E after Classes | 9.8 s | 4 Chromium tests: auth, students, guardians and classes integration smoke |
 
 ## Startup Notes
 
@@ -164,3 +170,21 @@ Mutations use RPCs:
 - unlink: `unlink_guardian_student`.
 
 Relationship changes invalidate the guardian list/detail and the affected Student 360 cache. No browser reload is used.
+
+## Classes Request Budget
+
+Target for opening `/turmas` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1`: 0 list requests.
+- `/rpc/list_classes`: 1 cold list request.
+- Cached return within `staleTime`: cached rows render immediately, then refresh only when invalidated/stale.
+
+`list_classes` returns schedule JSON, active enrollment count, available spots and full-class state in one paged RPC. This avoids per-row schedule/count requests.
+
+Opening a class detail performs detail-only reads:
+
+- `classes` with embedded schedules and enrollments plus student summary;
+- `audit_events` for the class timeline, limited to 50 rows.
+
+Mutations use RPCs and scoped invalidation. Student-affecting actions also invalidate the affected Student 360 relation cache, so `/alunos?aluno=<id>` reflects class changes without a browser reload.

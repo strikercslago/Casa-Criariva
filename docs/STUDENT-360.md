@@ -56,3 +56,13 @@ Student history labels include guardian events created by Phase 4:
 - `guardian.linked_to_student`
 - `guardian.relationship_updated`
 - `guardian.unlinked_from_student`
+
+## Classes Module Consistency
+
+Phase 5 edits `classes`, `class_schedules` and `enrollments` through owner-secured RPCs. Student 360 reads the same `enrollments` table, so adding, transferring or ending a class enrollment in `/turmas` appears in the student's `Matriculas` tab after TanStack Query invalidation.
+
+Student history labels include class enrollment events created by Phase 5:
+
+- `enrollment.created`
+- `enrollment.ended`
+- `enrollment.transferred`

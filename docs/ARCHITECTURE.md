@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-Phase 3 adds the first real domain module: Students. Guardians, classes, billing, finance, events, materials, ideas and reports remain intentionally outside this phase.
+The current real domain modules are Students, Student 360, Guardians and Classes. Billing, finance, events, materials, ideas and reports remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -109,3 +109,19 @@ Phase 4 turns `/responsaveis` into a real lazy domain module under `src/features
 The list uses `list_guardians` to avoid N+1 queries. The detail route loads one guardian, its linked students and guardian audit events only when opened. Links to students navigate with React Router to `/alunos?aluno=<id>`, so the Student 360 drawer remains the single student profile surface.
 
 Guardian contact mutations invalidate guardian lists/details and the Student 360 caches of linked students. Relationship mutations invalidate guardian caches and the affected student's detail/360 relation keys. There is no second source of truth for relationship flags.
+
+## Classes Module Pattern
+
+Phase 5 turns `/turmas` into a real lazy domain module under `src/features/classes`:
+
+- `api`: Supabase RPC/REST operations and class payload mapping.
+- `hooks`: TanStack Query hooks and query keys.
+- `schemas`: Zod validation for class schedules and enrollment actions.
+- `types`: database-backed class, schedule, enrollment and audit types.
+- `utils`: schedule formatting, capacity calculation and class error mapping.
+- `components`: filters, list, class form, create drawer, detail drawer and student action forms.
+- `pages`: route orchestration for `/turmas` and `/turmas/:classId`.
+
+The list uses `list_classes` to avoid N+1 schedule/enrollment counts. The detail drawer loads one class, schedules, enrollments with student summaries and class audit events only when opened. Links to students navigate to `/alunos?aluno=<id>`, keeping Student 360 as the single student profile surface.
+
+Class mutations invalidate class lists/details plus affected Student 360 relation caches. Transfer is not modeled in UI state; it is a single database RPC that ends the source enrollment and creates the target enrollment atomically.

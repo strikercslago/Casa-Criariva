@@ -109,3 +109,13 @@ Frontend safety:
 - New guardian RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
 - `audit_events` still has no direct frontend insert grant; guardian actions write audit events through the secured RPCs.
 - Owner simulation validated create, edit, link, relationship update, unlink and phone search inside a rollback transaction with `0` residual rows.
+
+## Classes Security
+
+- Phase 5 does not expose service role, database password, secret keys or access tokens.
+- Existing RLS remains enabled on `classes`, `class_schedules`, `enrollments`, `students` and `audit_events`.
+- Anonymous REST access to `classes`, `class_schedules` and `enrollments` is blocked with `401` / PostgreSQL `42501`.
+- Anonymous RPC access to `list_classes` is blocked with `401` / PostgreSQL `42501`.
+- Class RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
+- `audit_events` still has no direct frontend insert grant; class/enrollment actions write audit events through secured RPCs.
+- Owner simulation validated create, list, add student, transfer, end enrollment, schedule update, archive/restore, overlap rejection and transfer rollback to a full class inside a rollback transaction with `0` residual class rows.

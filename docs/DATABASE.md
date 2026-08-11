@@ -204,3 +204,39 @@ Index:
 | Table | Index | Benefited query |
 | --- | --- | --- |
 | `guardians` | `guardians_phone_digits_trgm_idx` | Digit-only phone search such as `54999999999` against formatted stored values like `(54) 99999-9999`. |
+
+## Classes Management
+
+Migration:
+
+- `20260811130000_classes_management_functions.sql`
+
+No new data table was added. Phase 5 reuses the normalized Student 360 schema:
+
+- `classes`: class configuration and status.
+- `class_schedules`: recurring ISO weekday/time rows.
+- `enrollments`: student/class membership and history.
+- `students`: student identity.
+- `audit_events`: timeline for class and student actions.
+
+Created functions:
+
+- `assert_class_schedules_valid(jsonb)`: internal schedule validator for weekday range, time order and same-class overlap.
+- `list_classes(text, text, text, integer, integer)`: paged list with schedules, active enrollment counts, available spots and full-class flag.
+- `create_class_with_schedules(jsonb)`: creates a class, schedules and audit event atomically.
+- `update_class_with_schedules(jsonb)`: updates class config and replaces schedules atomically.
+- `add_student_to_class(jsonb)`: adds one active enrollment after capacity and duplicate checks.
+- `end_class_enrollment(jsonb)`: ends an active enrollment and writes class/student audit events.
+- `transfer_student_class(jsonb)`: ends source enrollment and creates target enrollment atomically.
+- `update_class_status(jsonb)`: archives, restores or inactivates; archive is blocked with active enrollments.
+
+Existing relevant indexes:
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `classes` | `classes_status_name_idx` | Paged classes list and active class selection. |
+| `class_schedules` | `class_schedules_class_id_idx` | Schedule aggregation for list/detail. |
+| `enrollments` | `enrollments_class_status_idx` | Active occupancy counts by class. |
+| `enrollments` | `enrollments_student_status_idx` | Student 360 enrollment history. |
+| `enrollments` | `enrollments_active_student_class_uidx` | Prevents duplicate active enrollment for the same student/class. |
+| `audit_events` | `audit_events_entity_created_at_idx` | Class and Student 360 timelines. |
