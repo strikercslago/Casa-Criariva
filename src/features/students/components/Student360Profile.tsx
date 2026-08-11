@@ -33,6 +33,15 @@ import {
 } from '@/features/students/utils/student360Format'
 import { attendanceStatusLabels } from '@/features/agenda/utils/agendaFormat'
 import { formatTimeRange } from '@/features/agenda/utils/agendaDates'
+import { PaymentDrawer } from '@/features/billing/components/PaymentDrawer'
+import { useStudentBillingSnapshot } from '@/features/billing/hooks/useBilling'
+import type { MonthlyFeeListRow } from '@/features/billing/types/billingTypes'
+import { getCurrentReferenceMonth } from '@/features/billing/utils/billingDates'
+import {
+  formatMoney as formatBillingMoney,
+  getMonthlyFeeStatusLabel,
+  getMonthlyFeeStatusTone,
+} from '@/features/billing/utils/billingFormat'
 
 type Student360ProfileProps = {
   student: StudentRow
@@ -42,6 +51,7 @@ type Student360ProfileProps = {
 export function Student360Profile({ student, onArchiveRequest }: Student360ProfileProps) {
   const [isEditingStudent, setIsEditingStudent] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+  const [paymentFee, setPaymentFee] = useState<MonthlyFeeListRow | null>(null)
   const relationsQuery = useStudent360Data(student.id)
   const updateMutation = useUpdateStudent()
   const archiveMutation = useArchiveStudent()
@@ -173,10 +183,18 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
           {activeTab === 'guardians' ? <GuardiansTab guardians={relations.guardians} /> : null}
           {activeTab === 'enrollments' ? <EnrollmentsTab enrollments={relations.enrollments} /> : null}
           {activeTab === 'attendance' ? <AttendanceTab records={relations.attendanceRecords} /> : null}
-          {activeTab === 'billing' ? <BillingTab billingPlans={relations.billingPlans} /> : null}
+          {activeTab === 'billing' ? (
+            <BillingTab
+              billingPlans={relations.billingPlans}
+              onRegisterPayment={setPaymentFee}
+              studentId={student.id}
+            />
+          ) : null}
           {activeTab === 'history' ? <HistoryTab events={relations.auditEvents} /> : null}
         </div>
       ) : null}
+
+      <PaymentDrawer fee={paymentFee} onClose={() => setPaymentFee(null)} />
     </div>
   )
 }
@@ -333,21 +351,57 @@ function EnrollmentsTab({ enrollments }: { enrollments: EnrollmentWithClass[] })
   )
 }
 
-function BillingTab({ billingPlans }: { billingPlans: BillingPlanWithGuardian[] }) {
+function BillingTab({
+  billingPlans,
+  onRegisterPayment,
+  studentId,
+}: {
+  billingPlans: BillingPlanWithGuardian[]
+  onRegisterPayment: (fee: MonthlyFeeListRow) => void
+  studentId: string
+}) {
+  const [page, setPage] = useState(1)
+  const referenceMonth = useMemo(() => getCurrentReferenceMonth(), [])
+  const snapshotQuery = useStudentBillingSnapshot({ page, pageSize: 5, referenceMonth, studentId })
+  const snapshot = snapshotQuery.data
+
   if (billingPlans.length === 0) {
     return <EmptyPanel title="Mensalidade nao configurada" description="Este aluno ainda nao possui plano financeiro." />
   }
 
+  if (snapshotQuery.isLoading && !snapshotQuery.data) {
+    return (
+      <div className="grid gap-3">
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-44 w-full" />
+      </div>
+    )
+  }
+
+  if (snapshotQuery.isError) {
+    return (
+      <ErrorState
+        title="Nao foi possivel carregar o financeiro."
+        description={getUserSafeErrorMessage(snapshotQuery.error)}
+        onRetry={() => void snapshotQuery.refetch()}
+      />
+    )
+  }
+
+  const currentFee = snapshot?.current_fee
+  const recentFees = snapshot?.recent_fees ?? []
+  const totalPages = Math.max(1, Math.ceil((snapshot?.total_count ?? 0) / 5))
+
   return (
     <div className="grid gap-3">
-      {billingPlans.map((plan) => {
+      {billingPlans.map((plan, index) => {
         const netAmount = Number(plan.base_amount) - Number(plan.discount_amount)
 
         return (
           <article className="rounded-md border border-border bg-background p-4" key={plan.id}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-semibold text-foreground">Mensalidade atual</h3>
+                <h3 className="font-semibold text-foreground">{index === 0 ? 'Plano financeiro atual' : 'Plano financeiro anterior'}</h3>
                 <p className="mt-1 text-2xl font-semibold text-primary">{formatMoney(netAmount)}</p>
               </div>
               <Badge tone={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
@@ -362,6 +416,81 @@ function BillingTab({ billingPlans }: { billingPlans: BillingPlanWithGuardian[] 
           </article>
         )
       })}
+
+      <section className="grid gap-3 rounded-md border border-border bg-background p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="font-semibold text-foreground">Mensalidade do mes atual</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Status calculado a partir dos pagamentos confirmados.</p>
+          </div>
+          <Button onClick={() => { window.location.href = '/mensalidades' }} size="sm" variant="secondary">
+            Ver todas
+          </Button>
+        </div>
+
+        {currentFee ? (
+          <div className="grid gap-3">
+            <div className="flex flex-col gap-3 rounded border border-border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-foreground">{formatBillingMoney(currentFee.final_amount)}</p>
+                  <Badge tone={getMonthlyFeeStatusTone(currentFee)}>{getMonthlyFeeStatusLabel(currentFee)}</Badge>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Pago {formatBillingMoney(currentFee.amount_paid)} - Saldo {formatBillingMoney(currentFee.balance)}
+                </p>
+              </div>
+              <Button
+                disabled={currentFee.balance <= 0 || currentFee.lifecycle_status === 'cancelled'}
+                onClick={() => onRegisterPayment(currentFee)}
+                size="sm"
+                variant="secondary"
+              >
+                Registrar pagamento
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded border border-dashed border-border bg-surface p-4 text-sm">
+            <p className="font-semibold text-foreground">Mensalidade do mes ainda nao gerada</p>
+            <p className="mt-1 text-muted-foreground">Use a tela Mensalidades para gerar as cobrancas do mes.</p>
+          </div>
+        )}
+      </section>
+
+      <section className="grid gap-3 rounded-md border border-border bg-background p-4">
+        <h3 className="font-semibold text-foreground">Ultimas mensalidades</h3>
+        {recentFees.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma mensalidade gerada para este aluno.</p>
+        ) : (
+          <ol className="grid gap-2">
+            {recentFees.map((fee) => (
+              <li className="flex items-center justify-between gap-3 rounded border border-border bg-surface p-3" key={fee.monthly_fee_id}>
+                <div>
+                  <p className="font-medium text-foreground">
+                    {fee.reference_month.slice(5, 7)}/{fee.reference_month.slice(0, 4)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatBillingMoney(fee.final_amount)} - saldo {formatBillingMoney(fee.balance)}
+                  </p>
+                </div>
+                <Badge tone={getMonthlyFeeStatusTone(fee)}>{getMonthlyFeeStatusLabel(fee)}</Badge>
+              </li>
+            ))}
+          </ol>
+        )}
+        {totalPages > 1 ? (
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <Button disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} size="sm" variant="secondary">
+              Anteriores
+            </Button>
+            <span className="text-muted-foreground">{page} de {totalPages}</span>
+            <Button disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} size="sm" variant="secondary">
+              Proximas
+            </Button>
+          </div>
+        ) : null}
+      </section>
     </div>
   )
 }
