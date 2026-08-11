@@ -96,6 +96,11 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
       return
     }
 
+    if (url.pathname.includes('/rpc/get_dashboard_')) {
+      await route.fulfill({ contentType: 'application/json', json: dashboardRows(url.pathname), status: 200 })
+      return
+    }
+
     if (url.pathname.endsWith('/rpc/complete_student_enrollment')) {
       const body = request.postDataJSON() as {
         payload: {
@@ -321,3 +326,9 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
   expect(restRequests.filter((request) => request.includes('/students')).length).toBeGreaterThanOrEqual(6)
   expect(consoleErrors).toEqual([])
 })
+
+function dashboardRows(pathname: string) {
+  if (pathname.endsWith('/rpc/get_dashboard_today')) return [{ day_date: '2026-08-11', events_today_count: 0, expected_students: 0, next_event_id: '', next_event_name: '', next_event_start: '', next_session_class_name: '', next_session_expected_students: 0, next_session_id: '', next_session_start: '', pending_sessions_count: 0, sessions_count: 0 }]
+  if (pathname.endsWith('/rpc/get_dashboard_attention')) return []
+  return [{ active_classes_count: 0, active_students_count: 0, archived_students_count: 0, attendance_absent_count: 0, attendance_excused_count: 0, attendance_pending_sessions: 0, attendance_present_count: 0, attendance_rate: 0, available_spots: 0, cash_in: 0, cash_out: 0, class_active_enrollments: 0, class_occupancy_rate: 0, class_total_capacity: 0, full_classes_count: 0, low_stock_count: 0, net_students_change: 0, new_students_count: 0, next_event_date: '', next_event_id: '', next_event_name: '', out_of_stock_count: 0, overdue_billing_amount: 0, overdue_billing_count: 0, payable_amount: 0, receivable_amount: 0, reference_month: '2026-08-01', result_amount: 0, upcoming_events_count: 0 }]
+}
