@@ -336,3 +336,71 @@ Created:
 | `payments` | `payments_payer_guardian_idx` | Future payer/family payment lookups. |
 | `payment_allocations` | `payment_allocations_monthly_fee_idx` | Balance and payment history for one charge. |
 | `payment_allocations` | `payment_allocations_payment_idx` | Reversal impact and future multi-allocation payments. |
+
+## Finance Foundation
+
+Migrations:
+
+- `20260811190000_finance_foundation.sql`
+- `20260811190500_fix_finance_settlement_ambiguity.sql`
+
+Created:
+
+- Enum `public.financial_entry_type`: `income`, `expense`.
+- Enum `public.financial_lifecycle_status`: `active`, `cancelled`.
+- Enum `public.financial_settlement_status`: `active`, `reversed`.
+- Enum `public.cash_account_type`: `cash`, `bank`, `other`.
+- Enum `public.recurring_financial_frequency`: `monthly`.
+- Table `public.financial_categories`.
+- Table `public.cash_accounts`.
+- Table `public.recurring_financial_rules`.
+- Table `public.financial_entries`.
+- Table `public.financial_settlements`.
+
+### Finance Tables
+
+| Table | Purpose |
+| --- | --- |
+| `financial_categories` | Manual finance categories separated by income/expense type. |
+| `cash_accounts` | Cash or bank bucket used by manual settlements. |
+| `recurring_financial_rules` | Monthly rules that generate manual obligations idempotently. |
+| `financial_entries` | Manual non-tuition income/expense obligations. |
+| `financial_settlements` | Money effectively received/paid against manual entries. |
+
+Tuition receipts remain in `payments`. Finance reads received `payments` directly and does not create duplicated tuition revenue rows in `financial_entries`.
+
+### Finance Functions
+
+- `finance_month_bounds(date)`: returns month start/end.
+- `finance_entry_financial_rows(date, date, financial_entry_type)`: private manual obligation projection.
+- `finance_cash_flow_rows(date, date)`: private consolidated cash-flow projection from `payments` and `financial_settlements`.
+- `list_financial_entries(date, date, text, text, text, uuid, integer, integer)`: paged manual entry list.
+- `list_finance_cash_flow(date, date, text, uuid, uuid, integer, integer)`: paged consolidated cash flow.
+- `list_finance_receivables(date, integer, integer)`: pending monthly fees plus manual income entries.
+- `list_finance_payables(date, integer, integer)`: pending manual expense entries.
+- `get_finance_month_summary(date)`: received, paid, result, receivable and payable totals.
+- `create_financial_entry(jsonb)`: creates a manual entry, optionally with immediate settlement.
+- `update_financial_entry(jsonb)`: edits an entry and rejects amounts below active settlements.
+- `settle_financial_entry(jsonb)`: locks the entry, recalculates balance and rejects overpayment.
+- `reverse_financial_settlement(jsonb)`: reverses a manual settlement with required reason.
+- `cancel_financial_entry(jsonb)`: cancels an unsettled manual entry with required reason.
+- `create_recurring_financial_rule(jsonb)`: creates one monthly rule.
+- `update_recurring_financial_rule(jsonb)`: edits one monthly rule.
+- `disable_recurring_financial_rule(jsonb)`: disables one monthly rule.
+- `ensure_recurring_financial_entries(date)`: generates one entry per active rule/month without duplicates.
+
+### Finance Indexes
+
+| Table | Index | Benefited query |
+| --- | --- | --- |
+| `financial_categories` | `financial_categories_type_name_uidx` | Prevent duplicate category names per type. |
+| `cash_accounts` | `cash_accounts_name_uidx` | Prevent duplicate account names. |
+| `financial_entries` | `financial_entries_recurring_month_uidx` | Idempotent recurring generation by rule/month. |
+| `financial_entries` | `financial_entries_type_competence_idx` | Manual entry lists filtered by type and month. |
+| `financial_entries` | `financial_entries_due_date_idx` | Receivable/payable overdue calculations. |
+| `financial_entries` | `financial_entries_category_idx` | Category filters. |
+| `financial_entries` | `financial_entries_recurring_rule_idx` | Recurring rule traceability. |
+| `financial_settlements` | `financial_settlements_entry_idx` | Entry balance recalculation and settlement history. |
+| `financial_settlements` | `financial_settlements_settled_at_idx` | Cash-flow date windows. |
+| `financial_settlements` | `financial_settlements_cash_account_idx` | Cash account filtering. |
+| `recurring_financial_rules` | `recurring_financial_rules_active_idx` | Active monthly generation scan. |

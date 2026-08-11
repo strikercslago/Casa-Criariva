@@ -140,3 +140,15 @@ Frontend safety:
 - Payments are not deleted by the application. Corrections use `reverse_payment` with a required reason, preserving `payments` and `payment_allocations`.
 - `cancel_monthly_fee` refuses cancellation while received payments remain active.
 - Owner rollback simulation validated idempotent generation, due-date clamping, snapshot amounts, partial payment, full payment, overpayment rejection, reversal, preserved payment history, cancel-with-active-payment rejection and rollback with `0` residual rows.
+
+## Finance Security
+
+- `financial_categories`, `cash_accounts`, `recurring_financial_rules`, `financial_entries` and `financial_settlements` have RLS enabled.
+- Anonymous REST access to finance tables is blocked with `401` / PostgreSQL `42501`.
+- Anonymous RPC access to finance read/write functions is blocked with `401` / PostgreSQL `42501`.
+- Finance write RPCs validate `auth.uid()` and `current_user_is_owner()`, use fixed `search_path = public` and no dynamic SQL.
+- Finance read RPCs are `SECURITY DEFINER` only so private projections can stay revoked while still validating owner access.
+- `settle_financial_entry` locks the target entry and recalculates active settlements in the database before accepting money, preventing stale frontend balances and concurrent overpayment.
+- Manual settlements are not deleted by the application. Corrections use `reverse_financial_settlement` with a required reason.
+- Tuition payments are not duplicated into finance entries. Finance cash flow reads received `payments` once and treats `payment_allocations` only as allocation evidence.
+- Owner rollback simulation validated manual expense/income settlements, overpayment rejection, reversal, recurring generation, tuition payment counted once despite two allocations and rollback with `0` residual finance rows.

@@ -27,7 +27,7 @@ Remote data must use TanStack Query. Local UI state should stay close to the com
 
 ## Current Scope
 
-The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance and Billing/Payments. General finance, expenses, events, materials, ideas and reports remain intentionally outside this phase.
+The current real domain modules are Students, Student 360, Guardians, Classes, Agenda/Attendance, Billing/Payments and Finance. Events, materials, ideas and reports remain intentionally outside this phase.
 
 ## Auth Flow
 
@@ -163,3 +163,24 @@ Billing status is derived, not stored as a mutable status column. The UI receive
 Payments are registered through one RPC. The database locks the target monthly fee, recalculates balance and rejects overpayment, including concurrent overpayment attempts. The frontend does not use optimistic updates for money; it waits for the RPC and then invalidates the fee detail, month list, month summary and affected Student 360 snapshot.
 
 Payments are the future source of truth for tuition revenue. The later general finance phase must reuse or integrate this source instead of duplicating each payment as a disconnected revenue row.
+
+## Finance Pattern
+
+Phase 8 turns `/financeiro` into the general finance surface under `src/features/finance`:
+
+- `api`: Supabase RPC/direct table operations and payload mapping.
+- `hooks`: TanStack Query keys, list hooks and finance-wide invalidation.
+- `types`: generated table/RPC types plus filter/input shapes.
+- `utils`: month range, money/status labels and finance error mapping.
+- `components`: cash-flow list, entry list, obligation list, entry drawer, settlement drawer and recurring rules panel.
+- `pages`: month navigation, summary cards, tabs, filters and pagination.
+
+The architecture explicitly separates obligations from cash:
+
+`financial_entries -> financial_settlements -> cash_accounts`
+
+Manual non-tuition income and expenses live in `financial_entries`. Effective paid/received money lives in `financial_settlements`. Tuition cash receipts remain in Billing/Payments as `payments` and are read directly by finance projections, not copied into manual entries.
+
+Finance cash flow is a consolidated read model: received `payments` plus manual `financial_settlements`. `payment_allocations` are descriptive allocation evidence only and never create extra cash movements.
+
+Finance mutations invalidate all finance query keys. Billing payment, payment reversal and fee cancellation also invalidate `financeKeys.all`, keeping the general cash view synchronized with tuition changes.

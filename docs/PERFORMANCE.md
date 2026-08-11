@@ -95,6 +95,13 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 | 2026-08-11 | Unit/component tests after Billing/Payments | 18.09 s | 30 files, 53 tests |
 | 2026-08-11 | Billing E2E isolated | 12.6 s | 1 Chromium test: generation, partial/full payment, reversal and Student 360 Financeiro |
 | 2026-08-11 | E2E after Billing/Payments | 17.2 s | 6 Chromium tests: auth, students, guardians, classes, agenda and billing |
+| 2026-08-11 | Baseline before Finance | 10.06 s | `/financeiro` placeholder chunk was 0.29 KB / 0.23 KB gzip |
+| 2026-08-11 | Production build after Finance | 10.71 s | Vite internal build after final implementation |
+| 2026-08-11 | Initial JS bundle after Finance | 479.74 KB / 143.79 KB gzip | Main shell increased by about 0.12 KB gzip from Billing/Payments |
+| 2026-08-11 | Finance route chunk | 36.46 KB / 8.58 KB gzip | Lazy route with summary, cash flow, entries, obligations, drawers and recurring rules |
+| 2026-08-11 | Unit/component tests after Finance | 19.08 s | 31 files, 55 tests |
+| 2026-08-11 | Finance E2E isolated | 7.6 s | 1 Chromium test: summary, manual entry, settlement, cash flow, receivables and payables |
+| 2026-08-11 | E2E after Finance | 14.6 s | 7 Chromium tests: auth, students, guardians, classes, agenda, billing and finance |
 
 ## Startup Notes
 
@@ -231,3 +238,21 @@ Changing month or filters invalidates only the billing list key for those parame
 - the affected Student 360 billing snapshot.
 
 Opening a monthly fee performs one `get_monthly_fee_detail` RPC with payment history in the same response. Student 360 Financeiro performs one `get_student_billing_snapshot` RPC only when the Financeiro tab is opened; it does not load years of payment history during the initial student profile load.
+
+## Finance Request Budget
+
+Target for opening `/financeiro` after a valid session is already available:
+
+- `/auth/v1`: 0 requests.
+- `/rest/v1/financial_categories`: 1 cold metadata request.
+- `/rest/v1/cash_accounts`: 1 cold metadata request.
+- `/rest/v1/recurring_financial_rules`: 1 cold recurring rules request.
+- `/rpc/get_finance_month_summary`: 1 cold summary request.
+- `/rpc/list_finance_cash_flow`: 1 cold overview cash-flow request.
+- `/rpc/list_financial_entries`: 1 cold manual entries request.
+- `/rpc/list_finance_receivables`: 1 cold receivables request.
+- `/rpc/list_finance_payables`: 1 cold payables request.
+
+The route keeps all finance code lazy in `FinancePage`. Summary, cash flow, entries and obligations use separate TanStack Query keys so month/filter/page changes do not require browser reloads.
+
+Manual entry creation uses one `create_financial_entry` RPC. Manual settlement uses one `settle_financial_entry` RPC. Reversal and cancellation each use one RPC. Billing payment mutations invalidate finance keys because tuition cash is read from `payments` in the finance cash-flow projection.

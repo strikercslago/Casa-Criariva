@@ -1,6 +1,6 @@
 # Billing And Payments
 
-Phase 7 adds professional tuition billing without creating the future general finance module.
+Phase 7 adds professional tuition billing. Phase 8 integrates received tuition payments into Finance without duplicating revenue rows.
 
 ## Model
 
@@ -47,6 +47,8 @@ If a charge is both partial and overdue, the UI presents `Vencida - Parcial` so 
 
 No optimistic UI is used for money. The frontend waits for the RPC result and then refreshes only billing-related caches.
 
+In Phase 8, billing payment mutations also invalidate finance query keys. General finance reads received `payments` as tuition cash movements and does not mirror each tuition payment into `financial_entries`.
+
 ## Reversal And Cancellation
 
 Payments are not deleted by the application. `reverse_payment(payload)` requires a reason, marks the payment as `reversed` and keeps allocations for traceability. Reversed payments no longer count toward balances.
@@ -88,3 +90,9 @@ Remote rollback smoke test covered:
 - reversal preserving history;
 - cancel-with-active-payment rejection;
 - rollback with zero residual test rows.
+
+## Finance Integration
+
+`payments` is the source of truth for tuition cash receipts. `payment_allocations` explain how a payment was applied to one or more monthly fees, but allocations are not cash movements.
+
+Finance cash flow counts `payments.amount` once per received payment. This prevents duplicate cash when one payment is allocated to multiple monthly fees.
