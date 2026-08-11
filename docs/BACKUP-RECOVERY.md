@@ -4,6 +4,12 @@ Project: `baugbpqdgslfogggaqen` (`Creative House`), region `sa-east-1`.
 
 No paid Supabase add-on was enabled by this phase. PITR and paid backup retention must be checked in the Supabase dashboard before relying on them.
 
+Official references reviewed on 2026-08-11:
+
+- Supabase Database Backups: https://supabase.com/docs/guides/platform/backups
+- Supabase CLI reference: https://supabase.com/docs/reference/cli/introduction
+- Supabase CLI backup/restore guide: https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore
+
 ## Database Backup
 
 Use logical dumps for operator-controlled backups:
