@@ -43,6 +43,7 @@ export const router = createBrowserRouter([
               { path: 'agenda', element: <AgendaPage /> },
               { path: 'alunos', element: <StudentsPage /> },
               { path: 'responsaveis', element: <GuardiansPage /> },
+              { path: 'responsaveis/:guardianId', element: <GuardiansPage /> },
               { path: 'turmas', element: <ClassesPage /> },
               { path: 'frequencia', element: <AttendancePage /> },
               { path: 'mensalidades', element: <BillingPage /> },
