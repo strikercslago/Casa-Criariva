@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          recorded_by: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string | null
+          session_id?: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           action: string
@@ -75,6 +123,60 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_sessions: {
+        Row: {
+          class_id: string
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          schedule_id: string | null
+          session_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["class_session_status"]
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          schedule_id?: string | null
+          session_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["class_session_status"]
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          schedule_id?: string | null
+          session_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["class_session_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_sessions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_sessions_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "class_schedules"
             referencedColumns: ["id"]
           },
         ]
@@ -391,24 +493,75 @@ export type Database = {
     }
     Functions: {
       add_student_to_class: { Args: { payload: Json }; Returns: string }
+      assert_attendance_window: {
+        Args: { end_date: string; start_date: string }
+        Returns: undefined
+      }
       assert_class_schedules_valid: {
         Args: { schedules: Json }
         Returns: undefined
       }
       complete_student_enrollment: { Args: { payload: Json }; Returns: string }
       create_class_with_schedules: { Args: { payload: Json }; Returns: string }
+      create_extra_class_session: { Args: { payload: Json }; Returns: string }
       create_guardian_with_optional_student: {
         Args: { payload: Json }
         Returns: string
       }
       current_user_is_owner: { Args: never; Returns: boolean }
       end_class_enrollment: { Args: { payload: Json }; Returns: string }
+      ensure_class_sessions: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: number
+      }
+      get_session_attendance: {
+        Args: { p_session_id: string }
+        Returns: {
+          attendance_id: string
+          attendance_notes: string
+          attendance_status: Database["public"]["Enums"]["attendance_status"]
+          class_id: string
+          class_name: string
+          end_time: string
+          enrollment_id: string
+          preferred_name: string
+          recorded_at: string
+          recorded_by: string
+          session_date: string
+          session_id: string
+          session_notes: string
+          session_status: Database["public"]["Enums"]["class_session_status"]
+          start_time: string
+          student_id: string
+          student_name: string
+        }[]
+      }
       has_role: {
         Args: {
           check_role: Database["public"]["Enums"]["app_role"]
           check_user_id: string
         }
         Returns: boolean
+      }
+      list_agenda_sessions: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          absent_count: number
+          attendance_state: string
+          class_id: string
+          class_name: string
+          end_time: string
+          excused_count: number
+          expected_students: number
+          notes: string
+          present_count: number
+          recorded_count: number
+          schedule_id: string
+          session_date: string
+          session_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["class_session_status"]
+        }[]
       }
       list_classes: {
         Args: {
@@ -458,8 +611,10 @@ export type Database = {
         }[]
       }
       normalize_phone_digits: { Args: { phone_value: string }; Returns: string }
+      save_session_attendance: { Args: { payload: Json }; Returns: string }
       transfer_student_class: { Args: { payload: Json }; Returns: string }
       unlink_guardian_student: { Args: { payload: Json }; Returns: undefined }
+      update_class_session_status: { Args: { payload: Json }; Returns: string }
       update_class_status: { Args: { payload: Json }; Returns: string }
       update_class_with_schedules: { Args: { payload: Json }; Returns: string }
       update_guardian_contact: { Args: { payload: Json }; Returns: string }
@@ -470,7 +625,9 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "teacher"
+      attendance_status: "present" | "absent" | "excused"
       billing_plan_status: "active" | "paused" | "ended"
+      class_session_status: "planned" | "completed" | "cancelled"
       class_status: "active" | "inactive" | "archived"
       enrollment_status: "active" | "paused" | "ended"
       student_status: "active" | "inactive" | "archived"
@@ -602,7 +759,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "teacher"],
+      attendance_status: ["present", "absent", "excused"],
       billing_plan_status: ["active", "paused", "ended"],
+      class_session_status: ["planned", "completed", "cancelled"],
       class_status: ["active", "inactive", "archived"],
       enrollment_status: ["active", "paused", "ended"],
       student_status: ["active", "inactive", "archived"],
