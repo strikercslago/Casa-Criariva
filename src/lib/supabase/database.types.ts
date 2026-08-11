@@ -390,18 +390,48 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_student_to_class: { Args: { payload: Json }; Returns: string }
+      assert_class_schedules_valid: {
+        Args: { schedules: Json }
+        Returns: undefined
+      }
       complete_student_enrollment: { Args: { payload: Json }; Returns: string }
+      create_class_with_schedules: { Args: { payload: Json }; Returns: string }
       create_guardian_with_optional_student: {
         Args: { payload: Json }
         Returns: string
       }
       current_user_is_owner: { Args: never; Returns: boolean }
+      end_class_enrollment: { Args: { payload: Json }; Returns: string }
       has_role: {
         Args: {
           check_role: Database["public"]["Enums"]["app_role"]
           check_user_id: string
         }
         Returns: boolean
+      }
+      list_classes: {
+        Args: {
+          p_capacity_filter?: string
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_status_filter?: string
+        }
+        Returns: {
+          active_enrollments: number
+          available_spots: number
+          capacity: number
+          class_id: string
+          created_at: string
+          description: string
+          is_full: boolean
+          name: string
+          schedules: Json
+          status: Database["public"]["Enums"]["class_status"]
+          total_count: number
+          updated_at: string
+        }[]
       }
       list_guardians: {
         Args: {
@@ -428,7 +458,10 @@ export type Database = {
         }[]
       }
       normalize_phone_digits: { Args: { phone_value: string }; Returns: string }
+      transfer_student_class: { Args: { payload: Json }; Returns: string }
       unlink_guardian_student: { Args: { payload: Json }; Returns: undefined }
+      update_class_status: { Args: { payload: Json }; Returns: string }
+      update_class_with_schedules: { Args: { payload: Json }; Returns: string }
       update_guardian_contact: { Args: { payload: Json }; Returns: string }
       upsert_guardian_student_link: {
         Args: { payload: Json }
