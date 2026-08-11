@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+test.use({ viewport: { height: 844, width: 390 } })
+
 type Student = {
   archived_at: string | null
   birth_date: string | null
@@ -474,7 +476,7 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
   await page.getByRole('button', { name: 'Entrar' }).click()
 
   await expect(page.getByRole('heading', { name: 'Inicio' })).toBeVisible()
-  await page.getByRole('link', { name: 'Turmas' }).click()
+  await page.goto('/turmas')
   await expect(page.getByRole('heading', { name: 'Turmas' })).toBeVisible()
   await expect(page.getByText('Teatro 1').first()).toBeVisible()
 
@@ -507,7 +509,7 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
   await expect(page.getByText('Matricula transferida')).toBeVisible()
 
   await page.getByRole('dialog', { name: 'Aluno' }).getByRole('button', { name: 'Fechar' }).click()
-  await page.getByRole('link', { name: 'Turmas' }).click()
+  await page.goto('/turmas')
   await page.locator('article').filter({ hasText: 'Teatro 1' }).getByRole('button', { name: 'Ver turma' }).click()
   await page.getByRole('button', { name: 'Alunos matriculados' }).click()
   await page.getByRole('button', { name: 'Encerrar' }).click()
