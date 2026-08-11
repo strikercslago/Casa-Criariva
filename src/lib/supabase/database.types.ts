@@ -92,6 +92,33 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          type: Database["public"]["Enums"]["cash_account_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          type?: Database["public"]["Enums"]["cash_account_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: Database["public"]["Enums"]["cash_account_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_schedules: {
         Row: {
           class_id: string
@@ -255,6 +282,168 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          type: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          type: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_entries: {
+        Row: {
+          amount: number
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          category_id: string | null
+          competence_date: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          lifecycle_status: Database["public"]["Enums"]["financial_lifecycle_status"]
+          notes: string | null
+          recurring_rule_id: string | null
+          type: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category_id?: string | null
+          competence_date: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          lifecycle_status?: Database["public"]["Enums"]["financial_lifecycle_status"]
+          notes?: string | null
+          recurring_rule_id?: string | null
+          type: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category_id?: string | null
+          competence_date?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          lifecycle_status?: Database["public"]["Enums"]["financial_lifecycle_status"]
+          notes?: string | null
+          recurring_rule_id?: string | null
+          type?: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_entries_recurring_rule_id_fkey"
+            columns: ["recurring_rule_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_financial_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_settlements: {
+        Row: {
+          amount: number
+          cash_account_id: string | null
+          created_at: string
+          financial_entry_id: string
+          id: string
+          notes: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          recorded_by: string
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          settled_at: string
+          status: Database["public"]["Enums"]["financial_settlement_status"]
+        }
+        Insert: {
+          amount: number
+          cash_account_id?: string | null
+          created_at?: string
+          financial_entry_id: string
+          id?: string
+          notes?: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          recorded_by: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          settled_at: string
+          status?: Database["public"]["Enums"]["financial_settlement_status"]
+        }
+        Update: {
+          amount?: number
+          cash_account_id?: string | null
+          created_at?: string
+          financial_entry_id?: string
+          id?: string
+          notes?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          recorded_by?: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          settled_at?: string
+          status?: Database["public"]["Enums"]["financial_settlement_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_settlements_cash_account_id_fkey"
+            columns: ["cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "cash_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_settlements_financial_entry_id_fkey"
+            columns: ["financial_entry_id"]
+            isOneToOne: false
+            referencedRelation: "financial_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -480,6 +669,62 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_financial_rules: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          due_day: number
+          end_date: string | null
+          frequency: Database["public"]["Enums"]["recurring_financial_frequency"]
+          id: string
+          is_active: boolean
+          start_date: string
+          type: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_day: number
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["recurring_financial_frequency"]
+          id?: string
+          is_active?: boolean
+          start_date: string
+          type: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_day?: number
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["recurring_financial_frequency"]
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          type?: Database["public"]["Enums"]["financial_entry_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_financial_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_billing_plans: {
         Row: {
           auto_generate_fees: boolean
@@ -665,15 +910,27 @@ export type Database = {
         Args: { schedules: Json }
         Returns: undefined
       }
+      cancel_financial_entry: { Args: { payload: Json }; Returns: string }
       cancel_monthly_fee: { Args: { payload: Json }; Returns: string }
       complete_student_enrollment: { Args: { payload: Json }; Returns: string }
+      create_cash_account: { Args: { payload: Json }; Returns: string }
       create_class_with_schedules: { Args: { payload: Json }; Returns: string }
       create_extra_class_session: { Args: { payload: Json }; Returns: string }
+      create_financial_category: { Args: { payload: Json }; Returns: string }
+      create_financial_entry: { Args: { payload: Json }; Returns: string }
       create_guardian_with_optional_student: {
         Args: { payload: Json }
         Returns: string
       }
+      create_recurring_financial_rule: {
+        Args: { payload: Json }
+        Returns: string
+      }
       current_user_is_owner: { Args: never; Returns: boolean }
+      disable_recurring_financial_rule: {
+        Args: { payload: Json }
+        Returns: string
+      }
       end_class_enrollment: { Args: { payload: Json }; Returns: string }
       ensure_class_sessions: {
         Args: { p_end_date: string; p_start_date: string }
@@ -685,6 +942,65 @@ export type Database = {
           existing_count: number
           generated_count: number
           reference_month: string
+        }[]
+      }
+      ensure_recurring_financial_entries: {
+        Args: { p_reference_month: string }
+        Returns: {
+          existing_count: number
+          generated_count: number
+          reference_month: string
+        }[]
+      }
+      finance_cash_flow_rows: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          amount: number
+          cash_account_id: string
+          cash_account_name: string
+          category_id: string
+          category_name: string
+          description: string
+          direction: string
+          movement_id: string
+          occurred_at: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          related_entry_id: string
+          source_id: string
+          source_type: string
+        }[]
+      }
+      finance_entry_financial_rows: {
+        Args: {
+          p_end_date?: string
+          p_entry_type?: Database["public"]["Enums"]["financial_entry_type"]
+          p_start_date?: string
+        }
+        Returns: {
+          amount: number
+          balance: number
+          category_id: string
+          category_name: string
+          competence_date: string
+          computed_status: string
+          created_at: string
+          days_overdue: number
+          description: string
+          due_date: string
+          entry_id: string
+          is_partial: boolean
+          lifecycle_status: Database["public"]["Enums"]["financial_lifecycle_status"]
+          notes: string
+          recurring_rule_id: string
+          settled_amount: number
+          type: Database["public"]["Enums"]["financial_entry_type"]
+        }[]
+      }
+      finance_month_bounds: {
+        Args: { p_reference_month: string }
+        Returns: {
+          end_date: string
+          start_date: string
         }[]
       }
       get_billing_month_summary: {
@@ -700,6 +1016,18 @@ export type Database = {
           pending_amount: number
           received_amount: number
           reference_month: string
+        }[]
+      }
+      get_finance_month_summary: {
+        Args: { p_reference_month: string }
+        Returns: {
+          cash_in: number
+          cash_movements_count: number
+          cash_out: number
+          payable_amount: number
+          receivable_amount: number
+          reference_month: string
+          result_amount: number
         }[]
       }
       get_monthly_fee_detail: {
@@ -813,6 +1141,105 @@ export type Database = {
           updated_at: string
         }[]
       }
+      list_finance_cash_flow: {
+        Args: {
+          p_cash_account_id?: string
+          p_category_id?: string
+          p_direction_filter?: string
+          p_end_date: string
+          p_page?: number
+          p_page_size?: number
+          p_start_date: string
+        }
+        Returns: {
+          amount: number
+          cash_account_id: string
+          cash_account_name: string
+          category_id: string
+          category_name: string
+          description: string
+          direction: string
+          movement_id: string
+          occurred_at: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          related_entry_id: string
+          source_id: string
+          source_type: string
+          total_count: number
+        }[]
+      }
+      list_finance_payables: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_reference_month: string
+        }
+        Returns: {
+          amount: number
+          balance: number
+          computed_status: string
+          days_overdue: number
+          description: string
+          due_date: string
+          item_id: string
+          settled_amount: number
+          source_id: string
+          source_type: string
+          total_count: number
+        }[]
+      }
+      list_finance_receivables: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_reference_month: string
+        }
+        Returns: {
+          amount: number
+          balance: number
+          computed_status: string
+          days_overdue: number
+          description: string
+          due_date: string
+          item_id: string
+          settled_amount: number
+          source_id: string
+          source_type: string
+          total_count: number
+        }[]
+      }
+      list_financial_entries: {
+        Args: {
+          p_category_id?: string
+          p_end_date: string
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_start_date: string
+          p_status_filter?: string
+          p_type_filter?: string
+        }
+        Returns: {
+          amount: number
+          balance: number
+          category_id: string
+          category_name: string
+          competence_date: string
+          computed_status: string
+          created_at: string
+          days_overdue: number
+          description: string
+          due_date: string
+          entry_id: string
+          is_partial: boolean
+          lifecycle_status: Database["public"]["Enums"]["financial_lifecycle_status"]
+          notes: string
+          recurring_rule_id: string
+          settled_amount: number
+          total_count: number
+          type: Database["public"]["Enums"]["financial_entry_type"]
+        }[]
+      }
       list_guardians: {
         Args: {
           p_page?: number
@@ -907,6 +1334,7 @@ export type Database = {
           payment_id: string
         }[]
       }
+      reverse_financial_settlement: { Args: { payload: Json }; Returns: string }
       reverse_payment: {
         Args: { payload: Json }
         Returns: {
@@ -915,13 +1343,29 @@ export type Database = {
         }[]
       }
       save_session_attendance: { Args: { payload: Json }; Returns: string }
+      settle_financial_entry: {
+        Args: { payload: Json }
+        Returns: {
+          balance: number
+          computed_status: string
+          financial_entry_id: string
+          settled_amount: number
+          settlement_id: string
+        }[]
+      }
       transfer_student_class: { Args: { payload: Json }; Returns: string }
       unlink_guardian_student: { Args: { payload: Json }; Returns: undefined }
       update_class_session_status: { Args: { payload: Json }; Returns: string }
       update_class_status: { Args: { payload: Json }; Returns: string }
       update_class_with_schedules: { Args: { payload: Json }; Returns: string }
+      update_financial_category: { Args: { payload: Json }; Returns: string }
+      update_financial_entry: { Args: { payload: Json }; Returns: string }
       update_guardian_contact: { Args: { payload: Json }; Returns: string }
       update_monthly_fee_amount: { Args: { payload: Json }; Returns: string }
+      update_recurring_financial_rule: {
+        Args: { payload: Json }
+        Returns: string
+      }
       upsert_guardian_student_link: {
         Args: { payload: Json }
         Returns: undefined
@@ -931,12 +1375,17 @@ export type Database = {
       app_role: "owner" | "admin" | "teacher"
       attendance_status: "present" | "absent" | "excused"
       billing_plan_status: "active" | "paused" | "ended"
+      cash_account_type: "cash" | "bank" | "other"
       class_session_status: "planned" | "completed" | "cancelled"
       class_status: "active" | "inactive" | "archived"
       enrollment_status: "active" | "paused" | "ended"
+      financial_entry_type: "income" | "expense"
+      financial_lifecycle_status: "active" | "cancelled"
+      financial_settlement_status: "active" | "reversed"
       monthly_fee_lifecycle_status: "active" | "cancelled"
       payment_method: "pix" | "cash" | "card" | "bank_transfer" | "other"
       payment_status: "received" | "reversed"
+      recurring_financial_frequency: "monthly"
       student_status: "active" | "inactive" | "archived"
     }
     CompositeTypes: {
@@ -1068,12 +1517,17 @@ export const Constants = {
       app_role: ["owner", "admin", "teacher"],
       attendance_status: ["present", "absent", "excused"],
       billing_plan_status: ["active", "paused", "ended"],
+      cash_account_type: ["cash", "bank", "other"],
       class_session_status: ["planned", "completed", "cancelled"],
       class_status: ["active", "inactive", "archived"],
       enrollment_status: ["active", "paused", "ended"],
+      financial_entry_type: ["income", "expense"],
+      financial_lifecycle_status: ["active", "cancelled"],
+      financial_settlement_status: ["active", "reversed"],
       monthly_fee_lifecycle_status: ["active", "cancelled"],
       payment_method: ["pix", "cash", "card", "bank_transfer", "other"],
       payment_status: ["received", "reversed"],
+      recurring_financial_frequency: ["monthly"],
       student_status: ["active", "inactive", "archived"],
     },
   },
