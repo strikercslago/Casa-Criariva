@@ -21,6 +21,7 @@ Performance is a product requirement for Casa Criativa Gestao V2.
 - TanStack Query default `staleTime` is 60 seconds, with per-domain overrides expected later.
 - Cached data should render immediately while background refresh happens.
 - Reports, calendars and exporters must remain route-local chunks.
+- Student photos are client-optimized to 512x512 WebP before upload. Avatars use fixed dimensions, `object-fit: cover`, lazy image loading outside the large profile header and signed-URL cache keys by `photo_path`.
 
 ## Measurements
 
@@ -155,7 +156,7 @@ Students list cache uses `staleTime = 90_000 ms`. Global auth profile and roles 
 Students list query:
 
 ```sql
-select id, full_name, preferred_name, birth_date, enrollment_date, status
+select id, full_name, preferred_name, photo_path, birth_date, enrollment_date, status
 from students
 where status = :status -- omitted for "all"
   and full_name ilike :search -- only after debounce
@@ -166,7 +167,7 @@ range :page
 Detail query:
 
 ```sql
-select id, full_name, preferred_name, birth_date, enrollment_date, status,
+select id, full_name, preferred_name, photo_path, birth_date, enrollment_date, status,
        notes, created_by, created_at, updated_at, archived_at
 from students
 where id = :id

@@ -3,6 +3,7 @@ import { IconButton } from '@/shared/components/ui/IconButton'
 import { Table, Td, Th } from '@/shared/components/ui/Table'
 import type { StudentListItem } from '@/features/students/types/studentTypes'
 import { formatStudentDate } from '@/features/students/utils/studentDates'
+import { StudentAvatar } from './StudentAvatar'
 import { StudentStatusBadge } from './StudentStatusBadge'
 
 type StudentsListProps = {
@@ -33,19 +34,24 @@ export function StudentsList({ students, onOpenStudent, onPrefetchStudent }: Stu
                 onMouseEnter={() => onPrefetchStudent?.(student.id)}
               >
                 <Td className="text-foreground">
-                  <button
-                    className="text-left font-medium text-foreground hover:text-primary"
-                    onFocus={() => onPrefetchStudent?.(student.id)}
-                    onClick={() => onOpenStudent(student.id)}
-                    type="button"
-                  >
-                    {student.full_name}
-                  </button>
-                  {student.preferred_name ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Nome preferido: {student.preferred_name}
-                    </p>
-                  ) : null}
+                  <div className="flex items-center gap-3">
+                    <StudentAvatar size="sm" student={student} />
+                    <div className="min-w-0">
+                      <button
+                        className="text-left font-medium text-foreground hover:text-primary"
+                        onFocus={() => onPrefetchStudent?.(student.id)}
+                        onClick={() => onOpenStudent(student.id)}
+                        type="button"
+                      >
+                        {student.full_name}
+                      </button>
+                      {student.preferred_name ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Nome preferido: {student.preferred_name}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
                 </Td>
                 <Td>{formatStudentDate(student.enrollment_date)}</Td>
                 <Td>{formatStudentDate(student.birth_date)}</Td>
@@ -76,11 +82,14 @@ export function StudentsList({ students, onOpenStudent, onPrefetchStudent }: Stu
             onMouseEnter={() => onPrefetchStudent?.(student.id)}
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="truncate text-base font-semibold text-foreground">{student.full_name}</h2>
-                {student.preferred_name ? (
-                  <p className="mt-1 text-sm text-muted-foreground">{student.preferred_name}</p>
-                ) : null}
+              <div className="flex min-w-0 items-center gap-3">
+                <StudentAvatar size="md" student={student} />
+                <div className="min-w-0">
+                  <h2 className="truncate text-base font-semibold text-foreground">{student.full_name}</h2>
+                  {student.preferred_name ? (
+                    <p className="mt-1 text-sm text-muted-foreground">{student.preferred_name}</p>
+                  ) : null}
+                </div>
               </div>
               <StudentStatusBadge status={student.status} />
             </div>

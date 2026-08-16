@@ -17,7 +17,7 @@ import type {
 import { mapClassesError } from '@/features/classes/utils/classesErrors'
 
 const CLASSES_TIMEOUT_MS = 12_000
-const STUDENT_SEARCH_SELECT = 'id, full_name, preferred_name, birth_date, enrollment_date, status'
+const STUDENT_SEARCH_SELECT = 'id, full_name, preferred_name, photo_path, birth_date, enrollment_date, status'
 
 function getClient() {
   const supabase = getSupabaseClient()
@@ -66,7 +66,7 @@ export async function getClassDetail(classId: string): Promise<ClassDetail> {
       supabase
         .from('classes')
         .select(
-          'id, name, description, capacity, status, created_at, updated_at, class_schedules(id, class_id, weekday, start_time, end_time, created_at), enrollments(id, student_id, class_id, start_date, end_date, status, created_at, updated_at, student:students(id, full_name, preferred_name, birth_date, enrollment_date, status))',
+          'id, name, description, capacity, status, created_at, updated_at, class_schedules(id, class_id, weekday, start_time, end_time, created_at), enrollments(id, student_id, class_id, start_date, end_date, status, created_at, updated_at, student:students(id, full_name, preferred_name, photo_path, birth_date, enrollment_date, status))',
         )
         .eq('id', classId)
         .maybeSingle(),

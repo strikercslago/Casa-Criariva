@@ -15,11 +15,13 @@ import {
   getEnrollmentWizardDefaults,
   type EnrollmentWizardValues,
 } from '@/features/students/schemas/enrollmentWizardSchema'
+import { StudentPhotoPicker } from '@/features/students/components/StudentPhotoPicker'
 import {
   useClassesForEnrollment,
   useCompleteStudentEnrollment,
   useGuardianCandidates,
 } from '@/features/students/hooks/useStudent360'
+import { useUploadStudentPhoto } from '@/features/students/hooks/useStudentPhotos'
 import type { GuardianRow } from '@/features/students/types/student360Types'
 import { formatMoney, formatSchedules, getWeekdayLabel } from '@/features/students/utils/student360Format'
 
@@ -35,8 +37,10 @@ type EnrollmentWizardProps = {
 export function EnrollmentWizard({ isOpen, onClose, onCompleted }: EnrollmentWizardProps) {
   const [step, setStep] = useState(0)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const classesQuery = useClassesForEnrollment()
   const completeMutation = useCompleteStudentEnrollment()
+  const uploadPhotoMutation = useUploadStudentPhoto()
   const { notify } = useToast()
   const form = useForm<EnrollmentWizardValues>({
     defaultValues: getEnrollmentWizardDefaults(),
@@ -53,6 +57,7 @@ export function EnrollmentWizard({ isOpen, onClose, onCompleted }: EnrollmentWiz
     if (isOpen) {
       setStep(0)
       setSubmitError(null)
+      setPhotoFile(null)
       form.reset(getEnrollmentWizardDefaults())
     }
   }, [form, isOpen])
@@ -93,6 +98,22 @@ export function EnrollmentWizard({ isOpen, onClose, onCompleted }: EnrollmentWiz
 
     try {
       const result = await completeMutation.mutateAsync(form.getValues())
+
+      if (photoFile) {
+        try {
+          await uploadPhotoMutation.mutateAsync({ file: photoFile, studentId: result.studentId })
+        } catch (photoError) {
+          notify({
+            title: 'Aluno cadastrado, mas nao foi possivel enviar a foto.',
+            description: 'Voce pode adiciona-la depois.',
+            tone: 'info',
+          })
+          console.warn('[student-photo] post-enrollment upload failed', {
+            reason: getUserSafeErrorMessage(photoError),
+          })
+        }
+      }
+
       notify({ title: 'Matricula concluida com sucesso.', tone: 'success' })
       onCompleted(result.studentId)
       onClose()
@@ -131,7 +152,7 @@ export function EnrollmentWizard({ isOpen, onClose, onCompleted }: EnrollmentWiz
         </ol>
 
         <div className="min-h-[420px]">
-          {step === 0 ? <StudentStep form={form} /> : null}
+          {step === 0 ? <StudentStep form={form} photoFile={photoFile} setPhotoFile={setPhotoFile} /> : null}
           {step === 1 ? (
             <GuardiansStep
               addGuardian={addGuardian}
@@ -192,12 +213,12 @@ export function EnrollmentWizard({ isOpen, onClose, onCompleted }: EnrollmentWiz
               </Button>
             ) : (
               <Button
-                isLoading={completeMutation.isPending}
+                isLoading={completeMutation.isPending || uploadPhotoMutation.isPending}
                 leftIcon={<Check className="h-4 w-4" aria-hidden />}
                 onClick={() => void submitEnrollment()}
                 type="button"
               >
-                {completeMutation.isPending ? 'Concluindo matricula...' : 'Concluir matricula'}
+                {completeMutation.isPending || uploadPhotoMutation.isPending ? 'Concluindo matricula...' : 'Concluir matricula'}
               </Button>
             )}
           </div>
@@ -207,8 +228,17 @@ export function EnrollmentWizard({ isOpen, onClose, onCompleted }: EnrollmentWiz
   )
 }
 
-function StudentStep({ form }: { form: ReturnType<typeof useForm<EnrollmentWizardValues>> }) {
+function StudentStep({
+  form,
+  photoFile,
+  setPhotoFile,
+}: {
+  form: ReturnType<typeof useForm<EnrollmentWizardValues>>
+  photoFile: File | null
+  setPhotoFile: (file: File | null) => void
+}) {
   const errors = form.formState.errors.student
+  const studentName = form.watch('student.full_name')
 
   return (
     <section className="grid gap-4">
@@ -216,6 +246,8 @@ function StudentStep({ form }: { form: ReturnType<typeof useForm<EnrollmentWizar
         <h2 className="text-lg font-semibold text-foreground">Aluno</h2>
         <p className="mt-1 text-sm text-muted-foreground">Dados minimos para abrir uma matricula.</p>
       </div>
+
+      <StudentPhotoPicker file={photoFile} onChange={setPhotoFile} studentName={studentName} />
 
       <Input
         error={errors?.full_name?.message}

@@ -28,6 +28,7 @@ import {
   getEnrollmentStatusLabel,
   getEnrollmentStatusTone,
 } from '@/features/classes/utils/enrollmentStatus'
+import { StudentAvatar } from '@/features/students/components/StudentAvatar'
 import { formatStudentDate, getTodayIsoDate } from '@/features/students/utils/studentDates'
 
 type ClassDetailDrawerProps = {
@@ -371,12 +372,18 @@ function ClassStudentsTab({
       {sortedEnrollments.map((enrollment) => (
         <article className="rounded-md border border-border bg-background p-4" key={enrollment.id}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h3 className="font-semibold text-foreground">{enrollment.student?.full_name ?? 'Aluno'}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Inicio: {formatStudentDate(enrollment.start_date)}
-                {enrollment.end_date ? ` - Encerramento: ${formatStudentDate(enrollment.end_date)}` : ''}
-              </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <StudentAvatar
+                size="sm"
+                student={enrollment.student ?? { full_name: 'Aluno', photo_path: null, preferred_name: null }}
+              />
+              <div className="min-w-0">
+                <h3 className="font-semibold text-foreground">{enrollment.student?.full_name ?? 'Aluno'}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Inicio: {formatStudentDate(enrollment.start_date)}
+                  {enrollment.end_date ? ` - Encerramento: ${formatStudentDate(enrollment.end_date)}` : ''}
+                </p>
+              </div>
             </div>
             <Badge tone={getEnrollmentStatusTone(enrollment.status)}>
               {getEnrollmentStatusLabel(enrollment.status)}

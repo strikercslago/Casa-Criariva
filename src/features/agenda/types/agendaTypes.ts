@@ -41,6 +41,7 @@ export type SessionAttendanceRow = {
   session_notes: string | null
   session_status: ClassSessionStatus
   start_time: string
+  student_photo_path: string | null
   student_id: string
   student_name: string
 }

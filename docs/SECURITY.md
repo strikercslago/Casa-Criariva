@@ -37,6 +37,8 @@ Financeiro Geral, Relatorios, users, audit and critical security settings remain
 
 Future monitoring must not log passwords, tokens, keys or unnecessary sensitive data.
 
+Student photo cleanup logs must remain sanitized. They may include the Storage object path and a short failure reason, but must not log tokens, signed URLs or file contents.
+
 ## Current Audit Notes
 
 Phase 12 upgrades the app to React Router 7.18.2 and requires Node 20+ to clear the React Router advisories reported by `npm audit`.
@@ -100,6 +102,10 @@ Frontend safety:
 - Student API functions never use service role keys.
 - `.env.local` remains ignored.
 - Development auth/network diagnostics log status, path and duration only; they do not log passwords, tokens, API keys, request bodies or emails.
+- Student photos are private Storage objects in bucket `student-photos`; anonymous access is not granted.
+- `students.photo_path` stores only the object path. The browser generates temporary signed URLs at render time and never persists signed URLs.
+- Storage policies follow the active staff helpers: owner/admin can insert, update and delete objects; owner/admin/teacher can read when they already have student read access through `current_user_can_teach()`.
+- Bucket upload constraints allow only JPEG, PNG and WebP MIME types with a 1 MB stored-object limit. The frontend also validates input size and converts to 512x512 WebP before upload.
 
 ## Student 360 Security
 

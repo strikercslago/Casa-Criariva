@@ -22,6 +22,7 @@ import type {
 } from '@/features/agenda/types/agendaTypes'
 import { attendanceStatusLabels, calculateAttendanceRate } from '@/features/agenda/utils/agendaFormat'
 import { formatLongAgendaDate, formatTimeRange } from '@/features/agenda/utils/agendaDates'
+import { StudentAvatar } from '@/features/students/components/StudentAvatar'
 
 type AttendanceDrawerProps = {
   onClose: () => void
@@ -198,6 +199,7 @@ function toSessionFallback(session: AgendaSession | null): SessionAttendanceRow 
     session_notes: session.notes,
     session_status: session.status,
     start_time: session.start_time,
+    student_photo_path: null,
     student_id: '',
     student_name: '',
   }
@@ -295,9 +297,19 @@ function StudentAttendanceRow({
   return (
     <article className="grid gap-3 rounded-md border border-border bg-background p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="font-semibold text-foreground">{row.student_name}</h3>
-          <p className="text-sm text-muted-foreground">{row.preferred_name ? `Nome preferido: ${row.preferred_name}` : 'Sem nome preferido'}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <StudentAvatar
+            size="sm"
+            student={{
+              full_name: row.student_name,
+              photo_path: row.student_photo_path,
+              preferred_name: row.preferred_name,
+            }}
+          />
+          <div className="min-w-0">
+            <h3 className="font-semibold text-foreground">{row.student_name}</h3>
+            <p className="text-sm text-muted-foreground">{row.preferred_name ? `Nome preferido: ${row.preferred_name}` : 'Sem nome preferido'}</p>
+          </div>
         </div>
         {row.attendance_status ? <Badge tone="neutral">{attendanceStatusLabels[row.attendance_status]}</Badge> : <Badge tone="warning">Pendente</Badge>}
       </div>

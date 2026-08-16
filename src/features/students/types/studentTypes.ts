@@ -7,7 +7,7 @@ export type StudentUpdate = Database['public']['Tables']['students']['Update']
 
 export type StudentListItem = Pick<
   StudentRow,
-  'birth_date' | 'enrollment_date' | 'full_name' | 'id' | 'preferred_name' | 'status'
+  'birth_date' | 'enrollment_date' | 'full_name' | 'id' | 'photo_path' | 'preferred_name' | 'status'
 >
 
 export type StudentStatusFilter = 'all' | StudentStatus

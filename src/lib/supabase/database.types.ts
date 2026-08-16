@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -12,8 +12,84 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          currency_code: string
+          default_class_duration_minutes: number
+          default_due_day: number
+          default_page_size: number
+          display_name: string
+          email: string | null
+          locale: string
+          low_stock_threshold: number
+          organization_name: string
+          phone: string | null
+          singleton: boolean
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          currency_code?: string
+          default_class_duration_minutes?: number
+          default_due_day?: number
+          default_page_size?: number
+          display_name?: string
+          email?: string | null
+          locale?: string
+          low_stock_threshold?: number
+          organization_name?: string
+          phone?: string | null
+          singleton?: boolean
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          currency_code?: string
+          default_class_duration_minutes?: number
+          default_due_day?: number
+          default_page_size?: number
+          display_name?: string
+          email?: string | null
+          locale?: string
+          low_stock_threshold?: number
+          organization_name?: string
+          phone?: string | null
+          singleton?: boolean
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           created_at: string
@@ -1319,6 +1395,7 @@ export type Database = {
           full_name: string
           id: string
           notes: string | null
+          photo_path: string | null
           preferred_name: string | null
           status: Database["public"]["Enums"]["student_status"]
           updated_at: string
@@ -1332,6 +1409,7 @@ export type Database = {
           full_name: string
           id?: string
           notes?: string | null
+          photo_path?: string | null
           preferred_name?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           updated_at?: string
@@ -1345,6 +1423,7 @@ export type Database = {
           full_name?: string
           id?: string
           notes?: string | null
+          photo_path?: string | null
           preferred_name?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           updated_at?: string
@@ -1413,6 +1492,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      active_owner_count: { Args: never; Returns: number }
       add_student_to_class: { Args: { payload: Json }; Returns: string }
       archive_material: { Args: { payload: Json }; Returns: string }
       assert_attendance_window: {
@@ -1455,6 +1535,14 @@ export type Database = {
       create_recurring_financial_rule: {
         Args: { payload: Json }
         Returns: string
+      }
+      current_user_can_manage_billing: { Args: never; Returns: boolean }
+      current_user_can_manage_operations: { Args: never; Returns: boolean }
+      current_user_can_teach: { Args: never; Returns: boolean }
+      current_user_can_view_dashboard: { Args: never; Returns: boolean }
+      current_user_has_any_role: {
+        Args: { check_roles: Database["public"]["Enums"]["app_role"][] }
+        Returns: boolean
       }
       current_user_is_owner: { Args: never; Returns: boolean }
       disable_recurring_financial_rule: {
@@ -1540,6 +1628,31 @@ export type Database = {
           end_date: string
           start_date: string
         }[]
+      }
+      get_application_settings: {
+        Args: never
+        Returns: {
+          currency_code: string
+          default_class_duration_minutes: number
+          default_due_day: number
+          default_page_size: number
+          display_name: string
+          email: string | null
+          locale: string
+          low_stock_threshold: number
+          organization_name: string
+          phone: string | null
+          singleton: boolean
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "app_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_attendance_report: {
         Args: { p_end_date: string; p_start_date: string }
@@ -1794,6 +1907,7 @@ export type Database = {
           start_time: string
           student_id: string
           student_name: string
+          student_photo_path: string
         }[]
       }
       get_student_billing_snapshot: {
@@ -1837,6 +1951,29 @@ export type Database = {
           p_quantity: number
         }
         Returns: number
+      }
+      is_active_user: { Args: { check_user_id: string }; Returns: boolean }
+      list_admin_audit_events: {
+        Args: {
+          p_action?: string
+          p_actor_user_id?: string
+          p_end_date?: string
+          p_entity_type?: string
+          p_page?: number
+          p_page_size?: number
+          p_start_date?: string
+        }
+        Returns: {
+          action: string
+          actor_name: string
+          actor_user_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          summary: string
+          total_count: number
+        }[]
       }
       list_agenda_sessions: {
         Args: { p_end_date: string; p_start_date: string }
@@ -2282,6 +2419,31 @@ export type Database = {
       }
       transfer_student_class: { Args: { payload: Json }; Returns: string }
       unlink_guardian_student: { Args: { payload: Json }; Returns: undefined }
+      update_application_settings: {
+        Args: { payload: Json }
+        Returns: {
+          currency_code: string
+          default_class_duration_minutes: number
+          default_due_day: number
+          default_page_size: number
+          display_name: string
+          email: string | null
+          locale: string
+          low_stock_threshold: number
+          organization_name: string
+          phone: string | null
+          singleton: boolean
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "app_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       update_class_session_status: { Args: { payload: Json }; Returns: string }
       update_class_status: { Args: { payload: Json }; Returns: string }
       update_class_with_schedules: { Args: { payload: Json }; Returns: string }
@@ -2472,6 +2634,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["owner", "admin", "teacher"],

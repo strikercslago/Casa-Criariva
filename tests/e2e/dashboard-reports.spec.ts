@@ -5,6 +5,7 @@ test('shows reconciled dashboard and reports with CSV export', async ({ page }) 
   const rpcRequests: string[] = []
   const now = '2026-08-11T12:00:00.000Z'
   const userId = '11111111-1111-4111-8111-111111111111'
+  await page.clock.setFixedTime(new Date(now))
 
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text())

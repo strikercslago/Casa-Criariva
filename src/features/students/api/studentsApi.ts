@@ -16,9 +16,9 @@ import { getRestoreStatus } from '@/features/students/utils/studentStatus'
 import { mapStudentsError } from '@/features/students/utils/studentsErrors'
 
 const STUDENTS_TIMEOUT_MS = 12_000
-const STUDENT_LIST_SELECT = 'id, full_name, preferred_name, birth_date, enrollment_date, status'
+const STUDENT_LIST_SELECT = 'id, full_name, preferred_name, photo_path, birth_date, enrollment_date, status'
 const STUDENT_DETAIL_SELECT =
-  'id, full_name, preferred_name, birth_date, enrollment_date, status, notes, created_by, created_at, updated_at, archived_at'
+  'id, full_name, preferred_name, photo_path, birth_date, enrollment_date, status, notes, created_by, created_at, updated_at, archived_at'
 
 function getClient() {
   const supabase = getSupabaseClient()

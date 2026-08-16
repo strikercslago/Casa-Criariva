@@ -9,6 +9,7 @@ type Student = {
   full_name: string
   id: string
   notes: string | null
+  photo_path: string | null
   preferred_name: string | null
   status: 'active' | 'inactive' | 'archived'
   updated_at: string
@@ -27,6 +28,7 @@ type Guardian = {
 test('manages students with mocked Supabase requests', async ({ page }) => {
   const consoleErrors: string[] = []
   const restRequests: string[] = []
+  const storageRequests: string[] = []
   const authRequests: string[] = []
   const now = '2026-08-10T22:30:00.000Z'
   const userId = '11111111-1111-4111-8111-111111111111'
@@ -120,6 +122,7 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
         full_name: body.payload.student.full_name ?? 'Aluno temporario',
         id: 'student-1',
         notes: body.payload.student.notes ?? null,
+        photo_path: null,
         preferred_name: body.payload.student.preferred_name ?? null,
         status: 'active',
         updated_at: now,
@@ -219,6 +222,7 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
           full_name: body.full_name ?? 'Aluno temporario',
           id: 'student-1',
           notes: body.notes ?? null,
+          photo_path: body.photo_path ?? null,
           preferred_name: body.preferred_name ?? null,
           status: body.status ?? 'active',
           updated_at: now,
@@ -273,6 +277,33 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
     await route.fulfill({ contentType: 'application/json', json: {}, status: 404 })
   })
 
+  await page.route('https://baugbpqdgslfogggaqen.supabase.co/storage/v1/**', async (route) => {
+    const request = route.request()
+    const url = new URL(request.url())
+    storageRequests.push(`${request.method()} ${url.pathname}`)
+
+    if (url.pathname.includes('/object/student-photos/')) {
+      const objectPath = url.pathname.split('/object/student-photos/')[1] ?? 'student-1/avatar-test.webp'
+      await route.fulfill({
+        contentType: 'application/json',
+        json: { Key: `student-photos/${objectPath}` },
+        status: 200,
+      })
+      return
+    }
+
+    if (url.pathname.includes('/object/sign/student-photos/')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        json: { signedURL: '/mock-student-photo.webp' },
+        status: 200,
+      })
+      return
+    }
+
+    await route.fulfill({ contentType: 'application/json', json: {}, status: 200 })
+  })
+
   await page.goto('/login')
   await page.getByLabel('Email').fill('owner@example.com')
   await page.getByLabel('Senha').fill('senha-segura')
@@ -284,6 +315,17 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
   await expect(page.getByText('Nenhum aluno cadastrado ainda.')).toBeVisible()
 
   await page.getByRole('button', { name: 'Novo aluno' }).click()
+  const fileChooserPromise = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: 'Selecionar foto' }).click()
+  const fileChooser = await fileChooserPromise
+  await fileChooser.setFiles({
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=',
+      'base64',
+    ),
+    mimeType: 'image/png',
+    name: 'foto-aluno.png',
+  })
   await page.getByLabel(/^Nome completo/).fill('Aluno E2E Temporario')
   await page.getByLabel('Nome preferido').fill('E2E')
   await page.getByLabel(/^Data de matricula/).fill('2026-03-05')
@@ -301,6 +343,24 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
   await expect(page.getByText('Matricula concluida com sucesso.')).toBeVisible()
   await expect(page.getByText('Aluno E2E Temporario').first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Aluno E2E Temporario' })).toBeVisible()
+
+  const replacePhotoChooserPromise = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: 'Alterar foto' }).click()
+  const replacePhotoChooser = await replacePhotoChooserPromise
+  await replacePhotoChooser.setFiles({
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=',
+      'base64',
+    ),
+    mimeType: 'image/png',
+    name: 'foto-aluno-nova.png',
+  })
+  await page.getByRole('button', { name: 'Confirmar foto' }).click()
+  await expect(page.getByText('Foto do aluno atualizada.')).toBeVisible()
+
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Remover foto' }).click()
+  await expect(page.getByText('Foto removida.')).toBeVisible()
 
   await page.getByRole('button', { name: 'Editar dados do aluno' }).click()
   await page.getByLabel(/^Nome completo/).fill('Aluno E2E Editado')
@@ -324,6 +384,8 @@ test('manages students with mocked Supabase requests', async ({ page }) => {
 
   expect(authRequests.filter((request) => request.includes('/token'))).toHaveLength(1)
   expect(restRequests.filter((request) => request.includes('/students')).length).toBeGreaterThanOrEqual(6)
+  expect(storageRequests.some((request) => request.startsWith('POST /storage/v1/object/student-photos/student-1/'))).toBe(true)
+  expect(storageRequests.some((request) => request.startsWith('DELETE /storage/v1/object/student-photos'))).toBe(true)
   expect(consoleErrors).toEqual([])
 })
 

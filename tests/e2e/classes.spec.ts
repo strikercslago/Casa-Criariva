@@ -11,6 +11,7 @@ type Student = {
   full_name: string
   id: string
   notes: string | null
+  photo_path: string | null
   preferred_name: string | null
   status: 'active' | 'inactive' | 'archived'
   updated_at: string
@@ -63,6 +64,7 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
   const authRequests: string[] = []
   const now = '2026-08-11T12:00:00.000Z'
   const userId = '11111111-1111-4111-8111-111111111111'
+  await page.clock.setFixedTime(new Date(now))
   const students: Student[] = [
     {
       archived_at: null,
@@ -73,6 +75,7 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
       full_name: 'Ana Carolina',
       id: 'student-1',
       notes: null,
+      photo_path: null,
       preferred_name: 'Ana',
       status: 'active',
       updated_at: now,
@@ -510,6 +513,9 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
   await expect(page.getByText('Aluno transferido.')).toBeVisible()
   await expect(page.getByText('Encerramento: 11/08/2026')).toBeVisible()
 
+  await page
+    .getByRole('button', { name: 'Fechar aviso' })
+    .evaluateAll((buttons) => buttons.forEach((button) => (button as HTMLButtonElement).click()))
   await page.getByRole('button', { name: 'Abrir aluno' }).click()
   await expect(page.getByRole('heading', { name: 'Ana Carolina' })).toBeVisible()
   await page.getByRole('button', { name: 'Matriculas' }).click()

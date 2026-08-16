@@ -1,15 +1,18 @@
-import { Copy, MessageCircle, Pencil, RotateCcw, Archive } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Archive, Camera, Copy, MessageCircle, Pencil, RotateCcw, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { getUserSafeErrorMessage } from '@/lib/errors/AppError'
 import { ErrorState } from '@/shared/components/feedback/ErrorState'
 import { useToast } from '@/shared/components/feedback/Toast'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
+import { Overlay } from '@/shared/components/ui/Overlay'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { TabButton, Tabs } from '@/shared/components/ui/Tabs'
+import { StudentAvatar } from '@/features/students/components/StudentAvatar'
 import { StudentForm } from '@/features/students/components/StudentForm'
 import { StudentStatusBadge } from '@/features/students/components/StudentStatusBadge'
 import { useStudent360Data } from '@/features/students/hooks/useStudent360'
+import { useRemoveStudentPhoto, useUploadStudentPhoto } from '@/features/students/hooks/useStudentPhotos'
 import {
   useArchiveStudent,
   useRestoreStudent,
@@ -25,6 +28,7 @@ import type {
 } from '@/features/students/types/student360Types'
 import type { StudentRow } from '@/features/students/types/studentTypes'
 import { formatStudentDate } from '@/features/students/utils/studentDates'
+import { validateStudentPhotoFile } from '@/features/students/utils/studentPhoto'
 import {
   calculateAge,
   formatMoney,
@@ -58,10 +62,14 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
   const [isEditingStudent, setIsEditingStudent] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
   const [paymentFee, setPaymentFee] = useState<MonthlyFeeListRow | null>(null)
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const relationsQuery = useStudent360Data(student.id)
   const updateMutation = useUpdateStudent()
   const archiveMutation = useArchiveStudent()
   const restoreMutation = useRestoreStudent()
+  const uploadPhotoMutation = useUploadStudentPhoto()
+  const removePhotoMutation = useRemoveStudentPhoto()
   const { notify } = useToast()
   const age = calculateAge(student.birth_date)
   const relations = relationsQuery.data
@@ -73,6 +81,65 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
       notify({ title: 'Aluno atualizado.', tone: 'success' })
     } catch (error) {
       notify({ title: 'Nao foi possivel salvar.', description: getUserSafeErrorMessage(error), tone: 'error' })
+    }
+  }
+
+  function handlePhotoInputChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    try {
+      validateStudentPhotoFile(file)
+      setPendingPhotoFile(file)
+    } catch (error) {
+      notify({
+        title: 'Nao foi possivel selecionar a foto.',
+        description: getUserSafeErrorMessage(error),
+        tone: 'error',
+      })
+    }
+  }
+
+  async function confirmPhotoUpload() {
+    if (!pendingPhotoFile) {
+      return
+    }
+
+    try {
+      await uploadPhotoMutation.mutateAsync({
+        file: pendingPhotoFile,
+        previousPath: student.photo_path,
+        studentId: student.id,
+      })
+      setPendingPhotoFile(null)
+      notify({ title: 'Foto do aluno atualizada.', tone: 'success' })
+    } catch (error) {
+      notify({
+        title: 'Nao foi possivel enviar a foto.',
+        description: getUserSafeErrorMessage(error),
+        tone: 'error',
+      })
+    }
+  }
+
+  async function handleRemovePhoto() {
+    if (!student.photo_path || !window.confirm('Remover a foto deste aluno?')) {
+      return
+    }
+
+    try {
+      await removePhotoMutation.mutateAsync({ path: student.photo_path, studentId: student.id })
+      notify({ title: 'Foto removida.', tone: 'success' })
+    } catch (error) {
+      notify({
+        title: 'Nao foi possivel remover a foto.',
+        description: getUserSafeErrorMessage(error),
+        tone: 'error',
+      })
     }
   }
 
@@ -101,12 +168,15 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
     <div className="grid gap-5">
       <header className="grid gap-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-2xl font-semibold text-foreground">{student.full_name}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {student.preferred_name ? `Nome preferido: ${student.preferred_name}` : 'Nome preferido nao informado'}
-              {age !== null ? ` - ${age} anos` : ''}
-            </p>
+          <div className="flex min-w-0 items-center gap-4">
+            <StudentAvatar size="lg" student={student} />
+            <div className="min-w-0">
+              <h2 className="text-2xl font-semibold text-foreground">{student.full_name}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {student.preferred_name ? `Nome preferido: ${student.preferred_name}` : 'Nome preferido nao informado'}
+                {age !== null ? ` - ${age} anos` : ''}
+              </p>
+            </div>
           </div>
           <StudentStatusBadge status={student.status} />
         </div>
@@ -144,7 +214,31 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
               Arquivar aluno
             </Button>
           )}
+          <Button
+            isLoading={uploadPhotoMutation.isPending}
+            leftIcon={<Camera className="h-4 w-4" aria-hidden />}
+            onClick={() => photoInputRef.current?.click()}
+            variant="secondary"
+          >
+            {student.photo_path ? 'Alterar foto' : 'Adicionar foto'}
+          </Button>
+          <Button
+            disabled={!student.photo_path}
+            isLoading={removePhotoMutation.isPending}
+            leftIcon={<Trash2 className="h-4 w-4" aria-hidden />}
+            onClick={() => void handleRemovePhoto()}
+            variant="secondary"
+          >
+            Remover foto
+          </Button>
         </div>
+        <input
+          accept="image/jpeg,image/png,image/webp"
+          className="sr-only"
+          onChange={handlePhotoInputChange}
+          ref={photoInputRef}
+          type="file"
+        />
       </header>
 
       {relationsQuery.isLoading ? (
@@ -201,7 +295,71 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
       ) : null}
 
       <PaymentDrawer fee={paymentFee} onClose={() => setPaymentFee(null)} />
+
+      <PhotoConfirmOverlay
+        file={pendingPhotoFile}
+        isLoading={uploadPhotoMutation.isPending}
+        onCancel={() => setPendingPhotoFile(null)}
+        onConfirm={() => void confirmPhotoUpload()}
+        student={student}
+      />
     </div>
+  )
+}
+
+function PhotoConfirmOverlay({
+  file,
+  isLoading,
+  onCancel,
+  onConfirm,
+  student,
+}: {
+  file: File | null
+  isLoading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+  student: StudentRow
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl(null)
+      return
+    }
+
+    const nextPreviewUrl = URL.createObjectURL(file)
+    setPreviewUrl(nextPreviewUrl)
+
+    return () => URL.revokeObjectURL(nextPreviewUrl)
+  }, [file])
+
+  return (
+    <Overlay isOpen={Boolean(file)} onClose={onCancel} title="Alterar foto">
+      {file ? (
+        <div className="grid gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full border border-primary/20 bg-primary/10">
+              {previewUrl ? <img alt="" className="h-full w-full object-cover" src={previewUrl} /> : null}
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">{student.full_name}</h3>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                A foto sera recortada em formato quadrado e otimizada antes de salvar.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button onClick={onCancel} variant="secondary">
+              Cancelar
+            </Button>
+            <Button isLoading={isLoading} onClick={onConfirm}>
+              Confirmar foto
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </Overlay>
   )
 }
 

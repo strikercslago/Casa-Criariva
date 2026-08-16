@@ -85,6 +85,7 @@ describe('StudentsPage', () => {
             enrollment_date: '2026-03-05',
             full_name: 'Ana Beatriz',
             id: 'student-1',
+            photo_path: null,
             preferred_name: null,
             status: 'active',
           },
