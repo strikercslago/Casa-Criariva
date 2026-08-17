@@ -110,17 +110,22 @@ export function Student360Profile({ student, onArchiveRequest }: Student360Profi
     }
 
     try {
-      await uploadPhotoMutation.mutateAsync({
+      const result = await uploadPhotoMutation.mutateAsync({
         file: pendingPhotoFile,
         previousPath: student.photo_path,
         studentId: student.id,
       })
       setPendingPhotoFile(null)
       notify({ title: 'Foto do aluno atualizada.', tone: 'success' })
+      return result
     } catch (error) {
+      const message = getUserSafeErrorMessage(error)
       notify({
-        title: 'Nao foi possivel enviar a foto.',
-        description: getUserSafeErrorMessage(error),
+        title:
+          message === 'Nao foi possivel vincular a nova foto ao aluno.'
+            ? 'Nao foi possivel vincular a nova foto ao aluno.'
+            : 'Nao foi possivel enviar a foto.',
+        description: message,
         tone: 'error',
       })
     }

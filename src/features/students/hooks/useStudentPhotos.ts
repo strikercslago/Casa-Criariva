@@ -9,6 +9,8 @@ import { classesKeys } from '@/features/classes/hooks/classesKeys'
 import { student360Keys } from '@/features/students/hooks/student360Keys'
 import { studentPhotoKeys } from '@/features/students/hooks/studentPhotoKeys'
 import { studentsKeys } from '@/features/students/hooks/studentsKeys'
+import { logStudentPhotoDiagnostic } from '@/features/students/utils/studentPhotoDiagnostics'
+import type { StudentListResult, StudentRow } from '@/features/students/types/studentTypes'
 
 const STUDENT_PHOTO_STALE_TIME_MS = 50 * 60 * 1000
 
@@ -28,12 +30,14 @@ export function useUploadStudentPhoto() {
 
   return useMutation({
     mutationFn: uploadStudentPhoto,
-    onSuccess: (nextPath, variables) => {
+    onSuccess: ({ path: nextPath, studentId }, variables) => {
+      updateStudentPhotoPathCache(queryClient, studentId, nextPath)
       void queryClient.invalidateQueries({ queryKey: studentPhotoKeys.path(nextPath) })
       if (variables.previousPath) {
         void queryClient.removeQueries({ queryKey: studentPhotoKeys.path(variables.previousPath) })
       }
-      invalidateStudentPhotoSurfaces(queryClient, variables.studentId)
+      invalidateStudentPhotoSurfaces(queryClient, studentId)
+      logStudentPhotoDiagnostic('cache-invalidated', { path: nextPath, studentId })
     },
   })
 }
@@ -44,12 +48,37 @@ export function useRemoveStudentPhoto() {
   return useMutation({
     mutationFn: removeStudentPhoto,
     onSuccess: (_, variables) => {
+      updateStudentPhotoPathCache(queryClient, variables.studentId, null)
       if (variables.path) {
         void queryClient.removeQueries({ queryKey: studentPhotoKeys.path(variables.path) })
       }
       invalidateStudentPhotoSurfaces(queryClient, variables.studentId)
+      logStudentPhotoDiagnostic('cache-invalidated', { action: 'remove', studentId: variables.studentId })
     },
   })
+}
+
+function updateStudentPhotoPathCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  studentId: string,
+  photoPath: string | null,
+) {
+  queryClient.setQueryData<StudentRow | undefined>(studentsKeys.detail(studentId), (current) =>
+    current ? { ...current, photo_path: photoPath } : current,
+  )
+
+  queryClient.setQueriesData<StudentListResult>(
+    { queryKey: studentsKeys.lists() },
+    (current) =>
+      current
+        ? {
+            ...current,
+            students: current.students.map((student) =>
+              student.id === studentId ? { ...student, photo_path: photoPath } : student,
+            ),
+          }
+        : current,
+  )
 }
 
 function invalidateStudentPhotoSurfaces(queryClient: ReturnType<typeof useQueryClient>, studentId: string) {

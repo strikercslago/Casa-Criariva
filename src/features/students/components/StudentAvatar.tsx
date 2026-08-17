@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/shared/utils/cn'
 import { useStudentPhotoUrl } from '@/features/students/hooks/useStudentPhotos'
 import { getStudentDisplayName, getStudentInitials } from '@/features/students/utils/studentPhoto'
+import { warnStudentPhotoDiagnostic } from '@/features/students/utils/studentPhotoDiagnostics'
 
 type StudentAvatarSize = 'xs' | 'sm' | 'md' | 'lg'
 
@@ -32,6 +33,15 @@ export function StudentAvatar({ className, size = 'md', student }: StudentAvatar
     setHasImageError(false)
   }, [student.photo_path, signedUrl])
 
+  useEffect(() => {
+    if (signedUrlQuery.isError && student.photo_path) {
+      warnStudentPhotoDiagnostic('signed-url-query-failed', {
+        message: signedUrlQuery.error instanceof Error ? signedUrlQuery.error.message : 'unknown error',
+        path: student.photo_path,
+      })
+    }
+  }, [signedUrlQuery.error, signedUrlQuery.isError, student.photo_path])
+
   return (
     <span
       aria-label={`Avatar de ${displayName}`}
@@ -48,7 +58,10 @@ export function StudentAvatar({ className, size = 'md', student }: StudentAvatar
           className="h-full w-full object-cover"
           decoding="async"
           loading={size === 'lg' ? 'eager' : 'lazy'}
-          onError={() => setHasImageError(true)}
+          onError={() => {
+            warnStudentPhotoDiagnostic('image-render-failed', { path: student.photo_path })
+            setHasImageError(true)
+          }}
           src={signedUrl}
         />
       ) : (
