@@ -22,6 +22,11 @@ import {
 import type { ClassFormValues } from '@/features/classes/schemas/classSchema'
 import type { ClassDetail, EnrollmentWithStudent } from '@/features/classes/types/classTypes'
 import { formatAvailableSpots, formatCapacity, isClassFull } from '@/features/classes/utils/classCapacity'
+import {
+  sortClassEnrollmentHistory,
+  sortCurrentClassEnrollments,
+  splitClassEnrollments,
+} from '@/features/classes/utils/classEnrollment'
 import { formatClassSchedules } from '@/features/classes/utils/classSchedule'
 import { getClassStatusLabel } from '@/features/classes/utils/classStatus'
 import {
@@ -51,10 +56,12 @@ export function ClassDetailDrawer({ classId, onClose }: ClassDetailDrawerProps) 
   const navigate = useNavigate()
   const { notify } = useToast()
   const classData = detailQuery.data
-  const activeEnrollments = useMemo(
-    () => classData?.enrollments.filter((enrollment) => enrollment.status === 'active') ?? [],
-    [classData?.enrollments],
+  const todayIso = useMemo(() => getTodayIsoDate(), [])
+  const enrollmentGroups = useMemo(
+    () => splitClassEnrollments(classData?.enrollments ?? [], todayIso),
+    [classData?.enrollments, todayIso],
   )
+  const activeEnrollments = enrollmentGroups.current
 
   function handleClose() {
     setActiveTab('overview')
@@ -174,7 +181,8 @@ export function ClassDetailDrawer({ classId, onClose }: ClassDetailDrawerProps) 
             ) : null}
             {activeTab === 'students' ? (
               <ClassStudentsTab
-                enrollments={classData.enrollments}
+                activeEnrollments={enrollmentGroups.current}
+                historicalEnrollments={enrollmentGroups.history}
                 onEnd={setEndingEnrollment}
                 onOpenStudent={(studentId) => navigate(`/alunos?aluno=${studentId}`)}
                 onTransfer={setTransferringEnrollment}
@@ -349,52 +357,119 @@ function ClassOverview({ activeEnrollments, classData }: { activeEnrollments: nu
 }
 
 function ClassStudentsTab({
-  enrollments,
+  activeEnrollments,
+  historicalEnrollments,
   onEnd,
   onOpenStudent,
   onTransfer,
 }: {
-  enrollments: EnrollmentWithStudent[]
+  activeEnrollments: EnrollmentWithStudent[]
+  historicalEnrollments: EnrollmentWithStudent[]
   onEnd: (enrollment: EnrollmentWithStudent) => void
   onOpenStudent: (studentId: string) => void
   onTransfer: (enrollment: EnrollmentWithStudent) => void
 }) {
-  const sortedEnrollments = enrollments
-    .slice()
-    .sort((first, second) => Number(second.status === 'active') - Number(first.status === 'active') || first.start_date.localeCompare(second.start_date))
-
-  if (sortedEnrollments.length === 0) {
-    return <EmptyPanel title="Nenhum aluno matriculado" description="Adicione alunos ativos para ocupar esta turma." />
-  }
+  const [showHistory, setShowHistory] = useState(false)
+  const sortedActiveEnrollments = useMemo(() => sortCurrentClassEnrollments(activeEnrollments), [activeEnrollments])
+  const sortedHistoricalEnrollments = useMemo(
+    () => sortClassEnrollmentHistory(historicalEnrollments),
+    [historicalEnrollments],
+  )
 
   return (
     <div className="grid gap-3">
-      {sortedEnrollments.map((enrollment) => (
-        <article className="rounded-md border border-border bg-background p-4" key={enrollment.id}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 items-center gap-3">
-              <StudentAvatar
-                size="sm"
-                student={enrollment.student ?? { full_name: 'Aluno', photo_path: null, preferred_name: null }}
-              />
-              <div className="min-w-0">
-                <h3 className="font-semibold text-foreground">{enrollment.student?.full_name ?? 'Aluno'}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Inicio: {formatStudentDate(enrollment.start_date)}
-                  {enrollment.end_date ? ` - Encerramento: ${formatStudentDate(enrollment.end_date)}` : ''}
-                </p>
-              </div>
+      {sortedActiveEnrollments.length === 0 ? (
+        <EmptyPanel title="Nenhum aluno ativo" description="Adicione alunos ativos para ocupar esta turma." />
+      ) : (
+        sortedActiveEnrollments.map((enrollment) => (
+          <EnrollmentCard
+            enrollment={enrollment}
+            key={enrollment.id}
+            onEnd={onEnd}
+            onOpenStudent={onOpenStudent}
+            onTransfer={onTransfer}
+            variant="active"
+          />
+        ))
+      )}
+
+      {sortedHistoricalEnrollments.length > 0 ? (
+        <section className="mt-2 rounded-md border border-border bg-background p-3">
+          <button
+            className="flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-foreground"
+            onClick={() => setShowHistory((current) => !current)}
+            type="button"
+          >
+            <span>Historico de matriculas</span>
+            <span className="text-muted-foreground">
+              {showHistory ? 'Ocultar' : `Ver encerrados (${sortedHistoricalEnrollments.length})`}
+            </span>
+          </button>
+
+          {showHistory ? (
+            <div className="mt-3 grid gap-2">
+              {sortedHistoricalEnrollments.map((enrollment) => (
+                <EnrollmentCard
+                  enrollment={enrollment}
+                  key={enrollment.id}
+                  onEnd={onEnd}
+                  onOpenStudent={onOpenStudent}
+                  onTransfer={onTransfer}
+                  variant="history"
+                />
+              ))}
             </div>
-            <Badge tone={getEnrollmentStatusTone(enrollment.status)}>
-              {getEnrollmentStatusLabel(enrollment.status)}
-            </Badge>
+          ) : null}
+        </section>
+      ) : null}
+    </div>
+  )
+}
+
+function EnrollmentCard({
+  enrollment,
+  onEnd,
+  onOpenStudent,
+  onTransfer,
+  variant,
+}: {
+  enrollment: EnrollmentWithStudent
+  onEnd: (enrollment: EnrollmentWithStudent) => void
+  onOpenStudent: (studentId: string) => void
+  onTransfer: (enrollment: EnrollmentWithStudent) => void
+  variant: 'active' | 'history'
+}) {
+  const isHistorical = variant === 'history'
+  const canManage = !isHistorical && enrollment.status === 'active'
+
+  return (
+    <article className="rounded-md border border-border bg-background p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <StudentAvatar
+            size="sm"
+            student={enrollment.student ?? { full_name: 'Aluno', photo_path: null, preferred_name: null }}
+          />
+          <div className="min-w-0">
+            <h3 className="font-semibold text-foreground">{enrollment.student?.full_name ?? 'Aluno'}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Inicio: {formatStudentDate(enrollment.start_date)}
+              {enrollment.end_date ? ` - Encerramento: ${formatStudentDate(enrollment.end_date)}` : ''}
+            </p>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={() => onOpenStudent(enrollment.student_id)} size="sm" variant="secondary">
-              Abrir aluno
-            </Button>
+        </div>
+        <Badge tone={getEnrollmentStatusTone(enrollment.status)}>
+          {getEnrollmentStatusLabel(enrollment.status)}
+        </Badge>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button onClick={() => onOpenStudent(enrollment.student_id)} size="sm" variant="secondary">
+          Abrir aluno
+        </Button>
+        {!isHistorical ? (
+          <>
             <Button
-              disabled={enrollment.status !== 'active'}
+              disabled={!canManage}
               leftIcon={<ArrowRightLeft className="h-4 w-4" aria-hidden />}
               onClick={() => onTransfer(enrollment)}
               size="sm"
@@ -403,7 +478,7 @@ function ClassStudentsTab({
               Transferir
             </Button>
             <Button
-              disabled={enrollment.status !== 'active'}
+              disabled={!canManage}
               leftIcon={<UserRoundX className="h-4 w-4" aria-hidden />}
               onClick={() => onEnd(enrollment)}
               size="sm"
@@ -411,10 +486,10 @@ function ClassStudentsTab({
             >
               Encerrar
             </Button>
-          </div>
-        </article>
-      ))}
-    </div>
+          </>
+        ) : null}
+      </div>
+    </article>
   )
 }
 

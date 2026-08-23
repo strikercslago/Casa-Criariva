@@ -511,11 +511,14 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
   await page.getByLabel('Nova turma').selectOption('class-target')
   await page.getByRole('button', { name: 'Transferir aluno' }).click()
   await expect(page.getByText('Aluno transferido.')).toBeVisible()
-  await expect(page.getByText('Encerramento: 11/08/2026')).toBeVisible()
-
+  await expect(page.getByText('Nenhum aluno ativo')).toBeVisible()
+  await expect(page.getByText('Encerramento: 11/08/2026')).not.toBeVisible()
   await page
     .getByRole('button', { name: 'Fechar aviso' })
     .evaluateAll((buttons) => buttons.forEach((button) => (button as HTMLButtonElement).click()))
+  await page.getByRole('button', { name: /Ver encerrados \(1\)/ }).click()
+  await expect(page.getByText('Encerramento: 11/08/2026')).toBeVisible()
+
   await page.getByRole('button', { name: 'Abrir aluno' }).click()
   await expect(page.getByRole('heading', { name: 'Ana Carolina' })).toBeVisible()
   await page.getByRole('button', { name: 'Matriculas' }).click()
@@ -530,6 +533,8 @@ test('manages classes, enrollments and Student 360 sync with mocked Supabase req
   await page.getByRole('button', { name: 'Encerrar' }).click()
   await page.getByRole('dialog', { name: 'Encerrar matricula' }).getByRole('button', { name: 'Encerrar' }).click()
   await expect(page.getByText('Matricula encerrada.')).toBeVisible()
+  await expect(page.getByText('Nenhum aluno ativo')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Ver encerrados \(1\)/ })).toBeVisible()
 
   await page.getByRole('button', { name: 'Arquivar turma' }).click()
   await page.getByRole('dialog', { name: 'Arquivar turma' }).getByRole('button', { name: 'Arquivar' }).click()
